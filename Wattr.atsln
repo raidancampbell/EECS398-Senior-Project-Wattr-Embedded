@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Atmel Studio Solution File, Format Version 11.00
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "Wattr", "Wattr\Wattr.cproj", "{72CA4186-AC86-4F3F-BFD8-6DC29DBEB7D9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
+		Release|ARM = Release|ARM
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{72CA4186-AC86-4F3F-BFD8-6DC29DBEB7D9}.Debug|ARM.ActiveCfg = Debug|ARM
+		{72CA4186-AC86-4F3F-BFD8-6DC29DBEB7D9}.Debug|ARM.Build.0 = Debug|ARM
+		{72CA4186-AC86-4F3F-BFD8-6DC29DBEB7D9}.Release|ARM.ActiveCfg = Release|ARM
+		{72CA4186-AC86-4F3F-BFD8-6DC29DBEB7D9}.Release|ARM.Build.0 = Release|ARM
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
