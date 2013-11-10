@@ -46,14 +46,18 @@ static void configure_console(void)
 	stdio_serial_init(CONF_UART, &uart_serial_options);
 }
 
+
+
 int main (void)
 {
 	sysclk_init();
 	board_init();
+	
+	
+	
+	//spi_master_init(ADE7753_SPI_MODULE);
 
-	ioport_init();
-
-	ioport_set_pin_level(ADE7753_GPIO, true);
+	ioport_set_pin_level(ADE7753_CS_GPIO, true);
 	
 	ioport_set_pin_level(LED1_GPIO, false);
 	ioport_set_pin_level(LED2_GPIO, false);
@@ -65,18 +69,13 @@ int main (void)
 	puts(STRING_HEADER);
 	
 	char input;
-	
+	uint8_t cmd;
 	for (;;) {
 		usart_serial_getchar(UART0, &input);
 		usart_serial_putchar(UART0, input);
 		usart_serial_putchar(UART0, '\r');
 		usart_serial_putchar(UART0, '\n');
-		
-		usart_serial_putchar(UART0, (ioport_get_pin_level(LED1_GPIO)+48));
-		
-		usart_serial_putchar(UART0, '\r');
-		usart_serial_putchar(UART0, '\n');
-		
+
 		switch (input) {
 			case '1':
 				ioport_toggle_pin_level(LED1_GPIO);
@@ -93,8 +92,25 @@ int main (void)
 			case '5':
 				ioport_toggle_pin_level(RELAY_2_GPIO);
 				break;
+			case '6':
+				cmd = 0x26; // Temp
+				// uint8_t cmd = 0x3F; // Die Revision
+				ioport_set_pin_level(ADE7753_CS_GPIO, false);
+				
+				spi_write(ADE7753_SPI_MODULE, 0x26, 0, 0);
+				
+				//spi_master_transfer(&cmd, sizeof(cmd));
+				ioport_set_pin_level(ADE7753_CS_GPIO, true);
+				
+				char result[8];
+				sprintf(result, "%d", cmd);
+				
+				puts(result);
+				puts("\r");
+				puts("\n");
+				
 		}
-		
+		 
 	}
 	
 }

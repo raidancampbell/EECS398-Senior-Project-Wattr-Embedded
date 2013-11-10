@@ -57,8 +57,10 @@ void board_init(void)
 	 * specific board configuration, found in conf_board.h.
 	 */
 	
-		/* Disable the watchdog */
-		WDT->WDT_MR = WDT_MR_WDDIS;
+	/* Disable the watchdog */
+	WDT->WDT_MR = WDT_MR_WDDIS;
+	
+	ioport_init();
 
 	ioport_set_pin_dir(LED1_GPIO, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_level(LED1_GPIO, LED1_INACTIVE_LEVEL);
@@ -82,9 +84,10 @@ void board_init(void)
 	ioport_set_pin_level(RELAY_2_GPIO, RELAY_2_INACTIVE_LEVEL);
 	
 	
-	ioport_set_pin_dir(ADE7753_GPIO, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_level(ADE7753_GPIO, ADE7753_INACTIVE_LEVEL);
-	
+	ioport_set_pin_dir(ADE7753_CS_GPIO, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(ADE7753_CS_GPIO, ADE7753_CS_INACTIVE_LEVEL);
+	ioport_set_pin_dir(ADE7753_RST_GPIO, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(ADE7753_RST_GPIO, ADE7753_RST_ACTIVE_LEVEL);
 	
 
 	ioport_set_port_peripheral_mode(PINS_UART0_PORT, PINS_UART0, PINS_UART0_MASK);
