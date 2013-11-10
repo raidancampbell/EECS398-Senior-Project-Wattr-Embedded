@@ -56,21 +56,34 @@ void board_init(void)
 	 * for, e.g., the I/O pins. The initialization can rely on application-
 	 * specific board configuration, found in conf_board.h.
 	 */
+	
+		/* Disable the watchdog */
+		WDT->WDT_MR = WDT_MR_WDDIS;
 
 	ioport_set_pin_dir(LED1_GPIO, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(LED1_GPIO, LED1_INACTIVE_LEVEL);
 	ioport_set_pin_dir(LED2_GPIO, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(LED2_GPIO, LED2_INACTIVE_LEVEL);
 	ioport_set_pin_dir(LED3_GPIO, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(LED3_GPIO, LED3_INACTIVE_LEVEL);
 
 	ioport_set_pin_dir(FP_LED0_GPIO, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(FP_LED0_GPIO, FP_LED0_INACTIVE_LEVEL);
 	ioport_set_pin_dir(FP_LED1_GPIO, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(FP_LED1_GPIO, FP_LED1_INACTIVE_LEVEL);
 	ioport_set_pin_dir(FP_LED2_GPIO, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(FP_LED2_GPIO, FP_LED2_INACTIVE_LEVEL);
 	ioport_set_pin_dir(FP_LED3_GPIO, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(FP_LED3_GPIO, FP_LED3_INACTIVE_LEVEL);
 	
 	ioport_set_pin_dir(RELAY_1_GPIO, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(RELAY_1_GPIO, RELAY_1_INACTIVE_LEVEL);
 	ioport_set_pin_dir(RELAY_2_GPIO, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(RELAY_2_GPIO, RELAY_2_INACTIVE_LEVEL);
 	
 	
 	ioport_set_pin_dir(ADE7753_GPIO, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(ADE7753_GPIO, ADE7753_INACTIVE_LEVEL);
 	
 	
 
