@@ -51,26 +51,50 @@ int main (void)
 	sysclk_init();
 	board_init();
 
-	
-	
-
-	ioport_toggle_pin_level(LED1_GPIO);
-
+	ioport_init();
 
 	ioport_set_pin_level(ADE7753_GPIO, true);
-
+	
+	ioport_set_pin_level(LED1_GPIO, false);
+	ioport_set_pin_level(LED2_GPIO, false);
+	ioport_set_pin_level(LED3_GPIO, false);
+	
 	/* Initialize the console uart */
 	configure_console();
 
-	ioport_toggle_pin_level(LED2_GPIO);
 	puts(STRING_HEADER);
-	ioport_toggle_pin_level(LED2_GPIO);
 	
 	char input;
+	
 	for (;;) {
 		usart_serial_getchar(UART0, &input);
 		usart_serial_putchar(UART0, input);
-		usart_serial_putchar(UART0, ++input);
+		usart_serial_putchar(UART0, '\r');
+		usart_serial_putchar(UART0, '\n');
+		
+		usart_serial_putchar(UART0, (ioport_get_pin_level(LED1_GPIO)+48));
+		
+		usart_serial_putchar(UART0, '\r');
+		usart_serial_putchar(UART0, '\n');
+		
+		switch (input) {
+			case '1':
+				ioport_toggle_pin_level(LED1_GPIO);
+				break;
+			case '2':
+				ioport_toggle_pin_level(LED2_GPIO);
+				break;
+			case '3':
+				ioport_toggle_pin_level(LED3_GPIO);
+				break;
+			case '4':
+				ioport_toggle_pin_level(RELAY_1_GPIO);
+				break;
+			case '5':
+				ioport_toggle_pin_level(RELAY_2_GPIO);
+				break;
+		}
+		
 	}
 	
 }
