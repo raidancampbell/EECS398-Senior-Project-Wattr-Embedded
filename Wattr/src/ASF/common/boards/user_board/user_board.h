@@ -31,7 +31,7 @@
 //#define BOARD_XOSC_TYPE        XOSC_TYPE_XTAL
 
 // External oscillator startup time
-//#define BOARD_XOSC_STARTUP_US  500000
+#define BOARD_XOSC_STARTUP_US  500000
 
 #define BOARD_FREQ_SLCK_XTAL            (32768U)
 #define BOARD_FREQ_SLCK_BYPASS          (32768U)
@@ -39,7 +39,10 @@
 #define BOARD_FREQ_MAINCK_BYPASS        (12000000U)
 
 #define BOARD_MCK                       CHIP_FREQ_CPU_MAX
+#define BOARD_MCK                       CHIP_FREQ_CPU_MAX
 
+/** board main clock xtal statup time */
+#define BOARD_OSC_STARTUP_US            15625
 
 
 #define BOARD_NAME "WATTR1"
@@ -228,6 +231,24 @@
 /** SPI SPCK pin definition. */
 #define SPI_SPCK_GPIO         (PIO_PA14_IDX)
 #define SPI_SPCK_FLAGS        (IOPORT_MODE_MUX_A)
+
+
+// SPI CS
+#define SPI_ADE7753_CS		"ADE7753 SPI /ChipSelect"
+#define PIN_ADE7753       {PIO_PC4, PIOC, ID_PIOC, PIO_OUTPUT_1, PIO_DEFAULT}
+#define PIN_ADE7753_MASK  PIO_PC4
+#define PIN_ADE7753_PIO   PIOC
+#define PIN_ADE7753_ID    ID_PIOC
+#define PIN_ADE7753_TYPE  PIO_OUTPUT_1
+#define PIN_ADE7753_ATTR  PIO_DEFAULT
+
+#define ADE7753_GPIO            (PIO_PC4_IDX)
+#define ADE7753_FLAGS           (0)
+#define ADE7753_ACTIVE_LEVEL    IOPORT_PIN_LEVEL_LOW
+#define ADE7753_INACTIVE_LEVEL  IOPORT_PIN_LEVEL_HIGH
+
+
+
 
 #define ADE7753_SPI_MODULE          SPI
 

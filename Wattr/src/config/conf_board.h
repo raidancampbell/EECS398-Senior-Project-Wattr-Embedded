@@ -9,18 +9,10 @@
 #define CONF_BOARD_H
 
 
-#define FTDI_UART	
 
-
-
-
-
-
-
-#define LED0 PIO_PE0_IDX
-
-
-
+// Enable the COM Port
+#define CONF_BOARD_UART_CONSOLE
+// USART Hardware ID
 #define CONSOLE_UART_ID	ID_UART0
 
 
