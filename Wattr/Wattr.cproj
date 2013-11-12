@@ -666,6 +666,12 @@
     <None Include="src\config\conf_sleepmgr.h">
       <SubType>compile</SubType>
     </None>
+    <Compile Include="src\components\ade7753.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\components\ade7753.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\main.c">
       <SubType>compile</SubType>
     </Compile>
@@ -1071,6 +1077,7 @@
     <Folder Include="src\ASF\thirdparty\CMSIS\Lib\" />
     <Folder Include="src\ASF\thirdparty\CMSIS\Lib\GCC\" />
     <Folder Include="src\config\" />
+    <Folder Include="src\components" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>
