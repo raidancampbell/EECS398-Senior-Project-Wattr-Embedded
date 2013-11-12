@@ -96,6 +96,49 @@ static void spi_master_transfer(void *p_buf, uint32_t size)
 	}
 }
 
+static void ade7753_read(uint8_t ic_register, void *data, uint8_t length, uint8_t *checksum) {
+	// Send the "I wanna read this register command"
+	spi_master_transfer(&ic_register, sizeof(ic_register));
+
+	uint8_t result = 0x00;
+	uint32_t running_result = 0x00000000;
+	
+	uint32_t *p_data;
+	p_data = data;
+	int i;
+	
+	// For how ever many bytes, read that
+	for (i = 0; i < length; i++) {
+		result = 0x00;
+		spi_master_transfer(&result, 1);
+		
+		// and add it to our result
+		running_result = (running_result << (8 * (length - i))) | result;
+		
+	}
+	
+	*p_data = running_result;
+
+	// Verify the result
+	*checksum = 0x3E;
+	spi_master_transfer(checksum, sizeof(uint8_t));
+	*checksum = 0x00;
+	spi_master_transfer(checksum, sizeof(uint8_t));
+}
+
+uint8_t verify_result(uint32_t *result, uint8_t *checksum) {
+	uint8_t i;
+	uint8_t ones = 0;
+	
+	for (i = 0; i < sizeof(*result)*8; i++) {
+		if (*result & (1 << i)) {
+			ones++;
+		}
+	}
+	
+	return (ones == (*checksum));
+}
+
 int main (void)
 {
 	sysclk_init();
@@ -113,7 +156,9 @@ int main (void)
 	puts(STRING_HEADER);
 	
 	char input;
-	uint8_t cmd;
+	uint32_t cmd = 0x00;
+	uint8_t checksum = 0x00;
+	
 	for (;;) {
 		usart_serial_getchar(UART0, &input);
 		usart_serial_putchar(UART0, input);
@@ -122,38 +167,40 @@ int main (void)
 
 		switch (input) {
 			case '1':
+				printf("Switching LED1\r\n");
 				ioport_toggle_pin_level(LED1_GPIO);
 				break;
 			case '2':
+				printf("Switching LED2\r\n");
 				ioport_toggle_pin_level(LED2_GPIO);
 				break;
 			case '3':
+				printf("Switching LED3\r\n");
 				ioport_toggle_pin_level(LED3_GPIO);
 				break;
 			case '4':
+				printf("Switching RELAY 1\r\n");
 				ioport_toggle_pin_level(RELAY_1_GPIO);
 				break;
 			case '5':
+				printf("Switching RELAY 2\r\n");
 				ioport_toggle_pin_level(RELAY_2_GPIO);
 				break;
-			case '6':
-				cmd = 0x3F;										// die revision
-				//puts("-> Master sending CMD_TEST... \r");
-				spi_master_transfer(&cmd, sizeof(cmd));
-				cmd = 0x00;
-				spi_master_transfer(&cmd, sizeof(cmd));
-				
-				
-				uint8_t mask = 0x3E;
-				spi_master_transfer(&mask, sizeof(mask));
-				mask = 0x00;
-				spi_master_transfer(&mask, sizeof(mask));
-				
-				printf("-E- Response 0x%x with a checksum of 0x%x \n\r", (unsigned)cmd, (unsigned)mask);
+			case 'd':
+				printf("Reading the DIEREV Register\r\n");
+				ade7753_read(0x3F, &cmd, 1, &checksum);
+				printf("Response 0x%x with a checksum of 0x%x %s \n\r", cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
 				break;
-				
+			case 'i':
+				printf("Reading the IRMS Register\r\n");
+				ade7753_read(0x16, &cmd, 3, &checksum);
+				printf("Response 0x%x (%d) with a checksum of 0x%x %s \n\r", cmd, (signed)cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
+				break;
+			case 'v':
+				printf("Reading the VRMS Register\r\n");
+				ade7753_read(0x17, &cmd, 3, &checksum);
+				printf("Response 0x%x (%d) with a checksum of 0x%x %s \n\r", cmd, cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
+				break;
 		}
-		 
 	}
-	
 }
