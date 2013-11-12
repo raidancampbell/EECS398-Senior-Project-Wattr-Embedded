@@ -82,10 +82,7 @@ void board_init(void)
 	ioport_set_pin_level(RELAY_1_GPIO, RELAY_1_INACTIVE_LEVEL);
 	ioport_set_pin_dir(RELAY_2_GPIO, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_level(RELAY_2_GPIO, RELAY_2_INACTIVE_LEVEL);
-	
-	
-	ioport_set_pin_dir(ADE7753_CS_GPIO, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_level(ADE7753_CS_GPIO, ADE7753_CS_INACTIVE_LEVEL);
+		
 	ioport_set_pin_dir(ADE7753_RST_GPIO, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_level(ADE7753_RST_GPIO, ADE7753_RST_ACTIVE_LEVEL);
 	
@@ -95,16 +92,8 @@ void board_init(void)
 	ioport_set_pin_peripheral_mode(SPI_MISO_GPIO, SPI_MISO_FLAGS);
 	ioport_set_pin_peripheral_mode(SPI_MOSI_GPIO, SPI_MOSI_FLAGS);
 	ioport_set_pin_peripheral_mode(SPI_SPCK_GPIO, SPI_SPCK_FLAGS);
+	
+	ioport_set_pin_peripheral_mode(SPI_NPCS1_PC4_GPIO, SPI_NPCS1_PC4_FLAGS);
+	
 
-
-
-	ioport_set_pin_peripheral_mode(PIN_HSMCI_MCCDA_GPIO, PIN_HSMCI_MCCDA_FLAGS);
-	ioport_set_pin_peripheral_mode(PIN_HSMCI_MCCK_GPIO, PIN_HSMCI_MCCK_FLAGS);
-	ioport_set_pin_peripheral_mode(PIN_HSMCI_MCDA0_GPIO, PIN_HSMCI_MCDA0_FLAGS);
-	ioport_set_pin_peripheral_mode(PIN_HSMCI_MCDA1_GPIO, PIN_HSMCI_MCDA1_FLAGS);
-	ioport_set_pin_peripheral_mode(PIN_HSMCI_MCDA2_GPIO, PIN_HSMCI_MCDA2_FLAGS);
-	ioport_set_pin_peripheral_mode(PIN_HSMCI_MCDA3_GPIO, PIN_HSMCI_MCDA3_FLAGS);
-
-	/* Configure SD/MMC card detect pin */
-	ioport_set_pin_peripheral_mode(SD_MMC_0_CD_GPIO, SD_MMC_0_CD_FLAGS);
 }

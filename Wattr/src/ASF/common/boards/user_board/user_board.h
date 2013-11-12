@@ -60,9 +60,6 @@
 #define PINS_UART0_TYPE   PIO_PERIPH_A
 #define PINS_UART0_ATTR   PIO_DEFAULT
 
-
-
-
 // OSIF LED1 is on PE0
 #define LED_1_NAME		  "OSIFU LED1"
 #define PIN_LED_1       {PIO_PE0, PIOE, ID_PIOE, PIO_OUTPUT_1, PIO_DEFAULT}
@@ -191,29 +188,6 @@
 #define RELAY_2_ACTIVE_LEVEL    IOPORT_PIN_LEVEL_LOW
 #define RELAY_2_INACTIVE_LEVEL  IOPORT_PIN_LEVEL_HIGH
 
-/** HSMCI pins definition. */
-/*! Number of slot connected on HSMCI interface */
-#define SD_MMC_HSMCI_MEM_CNT      1
-#define SD_MMC_HSMCI_SLOT_0_SIZE  4
-#define PINS_HSMCI   {0x3fUL << 26, PIOA, ID_PIOA, PIO_PERIPH_C, PIO_PULLUP}
-/** HSMCI MCCDA pin definition. */
-#define PIN_HSMCI_MCCDA_GPIO            (PIO_PA28_IDX)
-#define PIN_HSMCI_MCCDA_FLAGS           (IOPORT_MODE_MUX_C)
-/** HSMCI MCCK pin definition. */
-#define PIN_HSMCI_MCCK_GPIO             (PIO_PA29_IDX)
-#define PIN_HSMCI_MCCK_FLAGS            (IOPORT_MODE_MUX_C)
-/** HSMCI MCDA0 pin definition. */
-#define PIN_HSMCI_MCDA0_GPIO            (PIO_PA30_IDX)
-#define PIN_HSMCI_MCDA0_FLAGS           (IOPORT_MODE_MUX_C)
-/** HSMCI MCDA1 pin definition. */
-#define PIN_HSMCI_MCDA1_GPIO            (PIO_PA31_IDX)
-#define PIN_HSMCI_MCDA1_FLAGS           (IOPORT_MODE_MUX_C)
-/** HSMCI MCDA2 pin definition. */
-#define PIN_HSMCI_MCDA2_GPIO            (PIO_PA26_IDX)
-#define PIN_HSMCI_MCDA2_FLAGS           (IOPORT_MODE_MUX_C)
-/** HSMCI MCDA3 pin definition. */
-#define PIN_HSMCI_MCDA3_GPIO            (PIO_PA27_IDX)
-#define PIN_HSMCI_MCDA3_FLAGS           (IOPORT_MODE_MUX_C)
 
 /** SD/MMC card detect pin definition. */
 #define PIN_HSMCI_CD             {PIO_PA20, PIOA, ID_PIOA, PIO_INPUT, PIO_PULLUP}
@@ -232,20 +206,9 @@
 #define SPI_SPCK_GPIO         (PIO_PA14_IDX)
 #define SPI_SPCK_FLAGS        (IOPORT_MODE_MUX_A)
 
+#define SPI_NPCS1_PC4_GPIO    (PIO_PC4_IDX)
+#define SPI_NPCS1_PC4_FLAGS   (IOPORT_MODE_MUX_B)
 
-// SPI CS
-#define SPI_ADE7753_CS_NAME		"ADE7753 SPI /ChipSelect"
-#define PIN_ADE7753_CS       {PIO_PC4, PIOC, ID_PIOC, PIO_OUTPUT_1, PIO_DEFAULT}
-#define PIN_ADE7753_CS_MASK  PIO_PC4
-#define PIN_ADE7753_CS_PIO   PIOC
-#define PIN_ADE7753_CS_ID    ID_PIOC
-#define PIN_ADE7753_CS_TYPE  PIO_OUTPUT_1
-#define PIN_ADE7753_CS_ATTR  PIO_DEFAULT
-
-#define ADE7753_CS_GPIO            (PIO_PC4_IDX)
-#define ADE7753_CS_FLAGS           (0)
-#define ADE7753_CS_ACTIVE_LEVEL    IOPORT_PIN_LEVEL_HIGH
-#define ADE7753_CS_INACTIVE_LEVEL  IOPORT_PIN_LEVEL_LOW
 
 // ADE7753_CS RST
 #define SPI_ADE7753_RST_NAME		"ADE7753 SPI /RST"
@@ -267,52 +230,8 @@
 
 
 
-/** USB D- pin (System function) */
-#define PIN_USB_DM      {PIO_PB10}
-/** USB D+ pin (System function) */
-#define PIN_USB_DP      {PIO_PB11}
-	
-/* KSZ8051MNL relate PIN definition */
-#define PIN_KSZ8051MNL_RXC_IDX                PIO_PD14_IDX
-#define PIN_KSZ8051MNL_RXC_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_TXC_IDX                PIO_PD0_IDX
-#define PIN_KSZ8051MNL_TXC_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_TXEN_IDX                PIO_PD1_IDX
-#define PIN_KSZ8051MNL_TXEN_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_TXD3_IDX                PIO_PD16_IDX
-#define PIN_KSZ8051MNL_TXD3_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_TXD2_IDX                PIO_PD15_IDX
-#define PIN_KSZ8051MNL_TXD2_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_TXD1_IDX                PIO_PD3_IDX
-#define PIN_KSZ8051MNL_TXD1_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_TXD0_IDX                PIO_PD2_IDX
-#define PIN_KSZ8051MNL_TXD0_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_RXD3_IDX                PIO_PD12_IDX
-#define PIN_KSZ8051MNL_RXD3_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_RXD2_IDX                PIO_PD11_IDX
-#define PIN_KSZ8051MNL_RXD2_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_RXD1_IDX                PIO_PD6_IDX
-#define PIN_KSZ8051MNL_RXD1_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_RXD0_IDX                PIO_PD5_IDX
-#define PIN_KSZ8051MNL_RXD0_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_RXER_IDX                PIO_PD7_IDX
-#define PIN_KSZ8051MNL_RXER_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_RXDV_IDX                PIO_PD4_IDX
-#define PIN_KSZ8051MNL_RXDV_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_CRS_IDX                PIO_PD10_IDX
-#define PIN_KSZ8051MNL_CRS_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_COL_IDX                PIO_PD13_IDX
-#define PIN_KSZ8051MNL_COL_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_MDC_IDX          PIO_PD8_IDX
-#define PIN_KSZ8051MNL_MDC_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_MDIO_IDX                PIO_PD9_IDX
-#define PIN_KSZ8051MNL_MDIO_FLAGS            (IOPORT_MODE_MUX_A)
-#define PIN_KSZ8051MNL_INTRP_IDX                PIO_PD28_IDX
 
-/** HSMCI pins that shall be configured to access the SD card. */
-#define BOARD_SD_PINS               PINS_HSMCI
-/** HSMCI Card Detect pin. */
-#define BOARD_SD_PIN_CD             PIN_HSMCI_CD
+
 
 #define CONSOLE_UART               UART0
 #define CONSOLE_UART_ID            ID_UART0
