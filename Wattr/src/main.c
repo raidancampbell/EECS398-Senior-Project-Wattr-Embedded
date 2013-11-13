@@ -287,7 +287,25 @@ int main (void)
 				
 				printf("after: %x\r\n", gain_value);
 				
-				
+				break;
+			
+			case 'a':
+				printf("Reading the IRQEN Register\r\n");
+				ade7753_read(0x0A, &cmd, 2, &checksum);
+				printf("Response 0x%x (%b) with a checksum of 0x%x %s \n\r", cmd, cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
+				break;
+			case 'p':
+				printf("Reading the PERIOD Register\r\n");
+				ade7753_read(0x27, &cmd, 2, &checksum);
+				printf("Response 0x%x (%b) with a checksum of 0x%x %s \n\r", cmd, cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
+				break;
+			case 's':
+				printf("Reading the RSTSTATUS Register\r\n");
+				for (;;) {
+					ade7753_read(0x0C, &cmd, 2, &checksum);
+					printf("Response 0x%x (%b) with a checksum of 0x%x %s \n\r", cmd, cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
+				}
+				break;
 		}
 	}
 }
