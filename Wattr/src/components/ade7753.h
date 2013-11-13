@@ -147,6 +147,7 @@
 
 
 void ade7753_read(uint8_t ic_register, void *data, uint8_t length, uint8_t *checksum);
+void ade7753_write(uint8_t ic_register, void *data, uint8_t length);
 uint8_t verify_result(uint32_t *result, uint8_t *checksum);
 
 #endif /* ADE7753_H_ */

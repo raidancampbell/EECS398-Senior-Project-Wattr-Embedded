@@ -26,6 +26,11 @@
  */
 #include <asf.h>
 
+#define ADE7753_WRITE_MASK					0b10000000
+
+#define ADE7753_REGISTER_GAIN				0x0F
+
+
 #define STRING_EOL    "\r"
 #define STRING_HEADER "-- Wattr Hardware Revision 1--\r\n" \
 "-- "BOARD_NAME" --\r\n" \
@@ -144,6 +149,7 @@ int main (void)
 	sysclk_init();
 	board_init();
 		
+		
 	ioport_set_pin_level(LED1_GPIO, false);
 	ioport_set_pin_level(LED2_GPIO, false);
 	ioport_set_pin_level(LED3_GPIO, false);
@@ -158,6 +164,12 @@ int main (void)
 	char input;
 	uint32_t cmd = 0x00;
 	uint8_t checksum = 0x00;
+	
+	uint32_t samples[10] = {0,0,0,0,0,0,0,0,0,0};
+	uint8_t sample_checksum[10] = {0,0,0,0,0,0,0,0,0,0};
+		
+		int i = 0;
+		int j = 0;
 	
 	for (;;) {
 		usart_serial_getchar(UART0, &input);
@@ -201,6 +213,81 @@ int main (void)
 				ade7753_read(0x17, &cmd, 3, &checksum);
 				printf("Response 0x%x (%d) with a checksum of 0x%x %s \n\r", cmd, cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
 				break;
+			case 'c':
+			
+				// [17:10:09] <+jtl> yetanothername: so, how obnoxious would it be for you to accumulate, say, 10 voltage (24-bit) readings
+				// [17:10:14] <+jtl> on an inverval
+			
+				printf("Taking 10 VRMS samples with 26.042ms between them.\r\n");
+
+				
+				for (i = 0; i < 10; i++) {
+					ade7753_read(0x17, &samples[i], 3, &sample_checksum[i]);
+					for (j = 0; j < 1000000; j++) {}
+				}
+				
+				for (i = 0; i < 10; i++) {
+					printf("0x%x,%d,0x%x\r\n", samples[i], samples[i], sample_checksum[i]);
+				}
+				
+				//
+				uint32_t average = 0;
+				
+				for (i = 0; i < 10; i++) {
+					average += samples[i];
+				}
+				
+				average = average / 10;
+		
+				printf("average: %d\r\n", average);
+				
+				printf("Taking 10 IRMS samples with 26.042ms between them.\r\n");
+
+				
+				for (i = 0; i < 10; i++) {
+					ade7753_read(0x16, &samples[i], 3, &sample_checksum[i]);
+					for (j = 0; j < 1000000; j++) {}
+				}
+				
+				for (i = 0; i < 10; i++) {
+					printf("0x%x,%d,0x%x\r\n", samples[i], samples[i], sample_checksum[i]);
+				}
+				
+				//
+				average = 0;
+				
+				for (i = 0; i < 10; i++) {
+					average += samples[i];
+				}
+				
+				average = average / 10;
+				
+				printf("average: %d\r\n", average);
+				break;
+				
+			case 'g':
+			
+				printf("sup bro");
+				uint8_t gain_register = ADE7753_REGISTER_GAIN | ADE7753_WRITE_MASK;
+				uint8_t gain_value = 0b00000000;
+				uint8_t gain_checksum = 0;
+				
+				ade7753_read(ADE7753_REGISTER_GAIN, &gain_value, 1, &gain_checksum);
+				printf("before: %x\r\n", gain_value);
+				
+				gain_value = 0b00000001;
+				
+				spi_master_transfer(&gain_register, sizeof(gain_register));
+				ade7753_read(gain_value, &gain_value, 1, &gain_checksum);
+				
+				gain_value = 0b00000000;
+				
+				
+				ade7753_read(ADE7753_REGISTER_GAIN, &gain_value, 1, &gain_checksum);
+				
+				printf("after: %x\r\n", gain_value);
+				
+				
 		}
 	}
 }
