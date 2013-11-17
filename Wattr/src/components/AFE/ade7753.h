@@ -9,7 +9,6 @@
 #ifndef ADE7753_H_
 #define ADE7753_H_
 
-
 #define SPI_CHIP_SEL			  1
 #define SPI_CLK_POLARITY		  0
 #define SPI_CLK_PHASE			  0
@@ -26,7 +25,6 @@ static uint32_t gs_ul_spi_clock = 500000;
 
 // All write operations must be OR'ed with 0b10......
 #define ADE7753_WRITE_MASK					0b10000000
-
 
 // Listing of registers on the chip. See Page 52-54 on the datasheet
 #define ADE7753_REGISTER_WAVEFORM			0x01
@@ -152,8 +150,9 @@ static uint32_t gs_ul_spi_clock = 500000;
 #define ADE7753_REGISTER_DIEREV				0x3F
 #define ADE7753_REGISTER_DIEREV_BYTES		BITS8
 
-static void spi_master_initialize(void);
-static void spi_master_transfer(void *p_buf, uint32_t size);
+void spi_master_initialize(void);
+void spi_master_transfer(void *p_buf, uint32_t size);
+
 void ade7753_read(uint8_t ic_register, void *data, uint8_t length, uint8_t *checksum);
 void ade7753_write(uint8_t ic_register, void *data, uint8_t length);
 uint8_t verify_result(uint32_t *result, uint8_t *checksum);

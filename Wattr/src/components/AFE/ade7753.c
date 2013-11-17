@@ -6,9 +6,9 @@
  */ 
 
 #include <asf.h>
-#include "ade7753.h"
+#include <components/AFE/ade7753.h>
 
-static void spi_master_initialize(void) {
+void spi_master_initialize(void) {
 	/* Configure an SPI peripheral. */
 	spi_enable_clock(ADE7753_SPI_MODULE);
 	spi_disable(ADE7753_SPI_MODULE);
@@ -25,7 +25,7 @@ static void spi_master_initialize(void) {
 	spi_enable(ADE7753_SPI_MODULE);
 }
 
-static void spi_master_transfer(void *p_buf, uint32_t size) {
+void spi_master_transfer(void *p_buf, uint32_t size) {
 	uint32_t i;
 	uint8_t uc_pcs;
 	static uint16_t data;

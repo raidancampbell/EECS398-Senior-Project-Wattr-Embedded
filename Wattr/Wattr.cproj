@@ -667,10 +667,10 @@
     <None Include="src\config\conf_sleepmgr.h">
       <SubType>compile</SubType>
     </None>
-    <Compile Include="src\components\ade7753.c">
+    <Compile Include="src\components\AFE\ade7753.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\components\ade7753.h">
+    <Compile Include="src\components\AFE\ade7753.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\main.c">
@@ -1077,6 +1077,7 @@
     <Folder Include="src\ASF\thirdparty\CMSIS\Include\" />
     <Folder Include="src\ASF\thirdparty\CMSIS\Lib\" />
     <Folder Include="src\ASF\thirdparty\CMSIS\Lib\GCC\" />
+    <Folder Include="src\components\AFE" />
     <Folder Include="src\config\" />
     <Folder Include="src\components" />
   </ItemGroup>

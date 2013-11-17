@@ -25,14 +25,7 @@
  * Atmel Software Framework (ASF).
  */
 #include <asf.h>
-#include <components/ade7753.h>
-
-
-
-#define ADE7753_WRITE_MASK					0b10000000
-
-#define ADE7753_REGISTER_GAIN				0x0F
-
+#include <components/AFE/ade7753.h>
 
 #define STRING_EOL    "\r"
 #define STRING_HEADER "-- Wattr Hardware Revision 1--\r\n" \
@@ -42,8 +35,7 @@
 /**
  *  Configure UART console.
  */
-static void configure_console(void)
-{
+static void configure_console(void) {
 	const usart_serial_options_t uart_serial_options = {
 		.baudrate = CONF_UART_BAUDRATE,
 		.paritytype = CONF_UART_PARITY
@@ -54,15 +46,7 @@ static void configure_console(void)
 	stdio_serial_init(CONF_UART, &uart_serial_options);
 }
 
-
-
-
-
-
-
-
-int main (void)
-{
+int main (void) {
 	sysclk_init();
 	board_init();
 		
