@@ -432,6 +432,7 @@
       <Value>../src/ASF/common/services/serial</Value>
       <Value>../src/ASF/common/services/sleepmgr</Value>
       <Value>../src/ASF/common/utils/stdio/stdio_serial</Value>
+      <Value>../src/components</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize (-O1)</armgcc.compiler.optimization.level>
