@@ -70,7 +70,7 @@ void ade7753_read(uint8_t ic_register, void *data, uint8_t length, uint8_t *chec
 		spi_master_transfer(&result, 1);
 		
 		// and add it to our result
-		running_result = (running_result << (8 * (length - i))) | result;
+		running_result |= (((uint32_t)result) << (8 * (length - 1 - i)));
 		
 	}
 	
