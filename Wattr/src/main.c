@@ -74,21 +74,24 @@ typedef struct reading {
 
 typedef struct wire {
 	uint8_t		header;
-	uint16_t	flags;
 	uint8_t		reserved;
+	uint16_t	flags;
 	
-	reading		payload;
+	struct reading		payload;
+	
 	uint32_t	checksum;
 	uint32_t	footer;
 };
 
 void ZX_Handler(uint32_t id, uint32_t mask) {
 	uint32_t cmd = 0x00;
+	uint32_t cmd2 = 0x00;
 	uint8_t checksum = 0x00;
 	
 	ioport_toggle_pin_level(LED1_GPIO);
 	ade7753_read(0x17, &cmd, 3, &checksum);
-	printf("0x%x,%d\r\n", cmd, cmd);
+	ade7753_read(0x27, &cmd2, 2, &checksum);
+	printf("%d,%d\r\n", cmd, cmd2);
 }
 
 int main (void) {
