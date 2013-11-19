@@ -85,6 +85,10 @@ void board_init(void)
 		
 	ioport_set_pin_dir(ADE7753_RST_GPIO, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_level(ADE7753_RST_GPIO, ADE7753_RST_ACTIVE_LEVEL);
+
+
+	ioport_set_pin_input_mode(ADE7753_ZX_GPIO, ADE7753_ZX_FLAGS, ADE7753_ZX_SENSE);
+	ioport_set_pin_input_mode(UART0_RTS_GPIO, UART0_RTS_FLAGS, UART0_RTS_SENSE);
 	
 
 	ioport_set_port_peripheral_mode(PINS_UART0_PORT, PINS_UART0, PINS_UART0_MASK);

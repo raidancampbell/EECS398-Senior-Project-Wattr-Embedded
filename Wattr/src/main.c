@@ -46,14 +46,77 @@ static void configure_console(void) {
 	stdio_serial_init(CONF_UART, &uart_serial_options);
 }
 
+/** IRQ priority for PIO (The lower the value, the greater the priority) */
+#define IRQ_PRIOR_PIO    0
+
+
+typedef struct reading {
+	uint32_t voltage;				// ADE7753_REGISTER_VRMS
+	uint32_t current;				// ADE7753_REGISTER_IRMS
+	uint32_t frequency;				// 1 / ADE7753_REGISTER_PERIOD
+	uint32_t active_power;			// ADE7753_REGISTER_RAENERGY
+	uint32_t reactive_power;		// ADE7753_REGISTER_LVARENERGY
+	uint32_t apparent_power;		// ADE7753_REGISTER_LVAENERGY
+	uint32_t phase_angle;			// TODO: Calculation
+	uint32_t power_factor;			// TODO: Calculation
+	
+	uint8_t voltage_checksum;
+	uint8_t current_checksum;
+	uint8_t frequency_checksum;
+	uint8_t active_power_checksum;
+	
+	uint8_t reactive_power_checksum;
+	uint8_t apparent_power_checksum;
+	uint8_t phase_angle_checksum;
+	uint8_t power_factor_checksum;
+};
+
+
+typedef struct wire {
+	uint8_t		header;
+	uint16_t	flags;
+	uint8_t		reserved;
+	
+	reading		payload;
+	uint32_t	checksum;
+	uint32_t	footer;
+};
+
+void ZX_Handler(uint32_t id, uint32_t mask) {
+	uint32_t cmd = 0x00;
+	uint8_t checksum = 0x00;
+	
+	ioport_toggle_pin_level(LED1_GPIO);
+	ade7753_read(0x17, &cmd, 3, &checksum);
+	printf("0x%x,%d\r\n", cmd, cmd);
+}
+
 int main (void) {
 	sysclk_init();
 	board_init();
-		
-		
+	
+	
+	pmc_enable_periph_clk(PIN_ADE7753_ZX_ID);
+	pio_handler_set(PIN_ADE7753_ZX_PIO, PIN_ADE7753_ZX_ID, PIN_ADE7753_ZX_MASK, PIN_ADE7753_ZX_ATTR, ZX_Handler);
+	NVIC_EnableIRQ((IRQn_Type)PIN_ADE7753_ZX_ID);
+	pio_handler_set_priority(PIN_ADE7753_ZX_PIO, (IRQn_Type)PIN_ADE7753_ZX_ID, IRQ_PRIOR_PIO);
+	pio_enable_interrupt(PIN_ADE7753_ZX_PIO, PIN_ADE7753_ZX_MASK);
+	
+	/*pmc_enable_periph_clk(PIN_UART0_RTS_ID);
+	pio_handler_set(PIN_UART0_RTS_PIO, PIN_UART0_RTS_ID, PIN_UART0_RTS_MASK, PIN_UART0_RTS_ATTR, ZX_Handler);
+	NVIC_EnableIRQ((IRQn_Type)PIN_UART0_RTS_ID);
+	pio_handler_set_priority(PIN_UART0_RTS_PIO, (IRQn_Type)PIN_UART0_RTS_ID, IRQ_PRIOR_PIO);
+	pio_enable_interrupt(PIN_UART0_RTS_PIO, PIN_UART0_RTS_MASK);*/
+	
+	
+			
 	ioport_set_pin_level(LED1_GPIO, false);
 	ioport_set_pin_level(LED2_GPIO, false);
 	ioport_set_pin_level(LED3_GPIO, false);
+	ioport_set_pin_level(RELAY_1_GPIO, false);
+	ioport_set_pin_level(RELAY_2_GPIO, false);
+	
+	
 	
 	/* Initialize the console uart */
 	configure_console();
@@ -205,6 +268,11 @@ int main (void) {
 				for (;;) {
 					ade7753_read(0x0C, &cmd, 2, &checksum);
 					printf("Response 0x%x (%b) with a checksum of 0x%x %s \n\r", cmd, cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
+				}
+				break;
+			case 'z':
+				for (;;) {
+					printf("%d %d\r\n", ioport_get_pin_level(ADE7753_ZX_GPIO), ioport_get_pin_level(UART0_RTS_GPIO));
 				}
 				break;
 		}

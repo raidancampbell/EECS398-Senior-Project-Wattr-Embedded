@@ -193,7 +193,7 @@
         <documentation help="http://asf.atmel.com/docs/3.12.1/common.applications.user_application.user_board.sam4e/html/index.html" />
         <offline-documentation help="" />
         <dependencies>
-          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.3.0" />
+          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.11.0" />
         </dependencies>
         <project id="common.applications.user_application.user_board.sam4e" value="Add" config="" content-id="Atmel.ASF" />
         <board id="board.user_board.sam4e" value="Add" config="" content-id="Atmel.ASF" />
@@ -237,6 +237,7 @@
       <ToolName>J-Link</ToolName>
     </com_atmel_avrdbg_tool_samice>
     <avrtoolinterface>JTAG</avrtoolinterface>
+    <TriggerUpgrade>false</TriggerUpgrade>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <ToolchainSettings>
