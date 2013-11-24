@@ -24,7 +24,13 @@ static uint32_t gs_ul_spi_clock = 500000;
 #define BITS24 3
 
 // All write operations must be OR'ed with 0b10......
-#define ADE7753_WRITE_MASK					0b10000000
+#define ADE7753_WRITE_COMMAND					0b10000000
+
+// Lists of things that might have gone wrong...
+#define ADE7753_FLAGS_NONE					0x00;
+#define ADE7753_FLAGS_SAG					0x01;
+#define ADE7753_FLAGS_PKV					0x02;
+#define ADE7753_FLAGS_PKI					0x04;
 
 // Listing of registers on the chip. See Page 52-54 on the datasheet
 #define ADE7753_REGISTER_WAVEFORM			0x01

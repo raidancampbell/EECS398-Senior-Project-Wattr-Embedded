@@ -81,40 +81,11 @@ void ade7753_read(uint8_t ic_register, uint32_t *data, uint8_t length, uint8_t *
 	spi_master_transfer(checksum, sizeof(uint8_t));
 }
 
-/*
-
-printf("sup bro");
-uint8_t gain_register = ADE7753_REGISTER_GAIN | ADE7753_WRITE_MASK;
-uint8_t gain_value = 0b00000000;
-uint8_t gain_checksum = 0;
-
-ade7753_read(ADE7753_REGISTER_GAIN, &gain_value, 1, &gain_checksum);
-printf("before: %x\r\n", gain_value);
-
-gain_value = 0b00000001;
-
-spi_master_transfer(&gain_register, sizeof(gain_register));
-ade7753_read(gain_value, &gain_value, 1, &gain_checksum);
-
-gain_value = 0b00000000;
-
-
-ade7753_read(ADE7753_REGISTER_GAIN, &gain_value, 1, &gain_checksum);
-
-printf("after: %x\r\n", gain_value);
-
-break;
-*/
-
 void ade7753_write(uint8_t ic_register, uint32_t *data, uint8_t length) {
-	// I think this works
-	ic_register |= ADE7753_WRITE_MASK;
+	ic_register |= ADE7753_WRITE_COMMAND;
 	
 	spi_master_transfer(&ic_register, sizeof(ic_register));
-	
-	
 	ade7753_read(*data, data, length, &ic_register);
-	
 }
 
 /**

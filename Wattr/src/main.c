@@ -27,6 +27,9 @@
 #include <asf.h>
 #include <components/AFE/ade7753.h>
 
+#include <ASF/thirdparty/CMSIS/Include/arm_math.h>
+#define ARM_MATH_CM4
+
 #define STRING_EOL    "\r"
 #define STRING_HEADER "-- Wattr Hardware Revision 1--\r\n" \
 "-- "BOARD_NAME" --\r\n" \
@@ -49,11 +52,16 @@ static void configure_console(void) {
 /** IRQ priority for PIO (The lower the value, the greater the priority) */
 #define IRQ_PRIOR_PIO    0
 
-
-typedef struct Reading {
+typedef struct ReadingPacket {
+	uint8_t		header;
+	uint8_t		reserved;
+	uint16_t	flags;
+	
+	uint32_t epoch;
+	
 	uint32_t voltage;				// ADE7753_REGISTER_VRMS
 	uint32_t current;				// ADE7753_REGISTER_IRMS
-	uint32_t frequency;				// 1 / ADE7753_REGISTER_PERIOD
+	uint32_t period;				// ADE7753_REGISTER_PERIOD
 	uint32_t active_power;			// ADE7753_REGISTER_RAENERGY
 	uint32_t reactive_power;		// ADE7753_REGISTER_LVARENERGY
 	uint32_t apparent_power;		// ADE7753_REGISTER_LVAENERGY
@@ -62,51 +70,41 @@ typedef struct Reading {
 	
 	uint8_t voltage_checksum;
 	uint8_t current_checksum;
-	uint8_t frequency_checksum;
+	uint8_t period_checksum;
 	uint8_t active_power_checksum;
 	
 	uint8_t reactive_power_checksum;
 	uint8_t apparent_power_checksum;
 	uint8_t phase_angle_checksum;
 	uint8_t power_factor_checksum;
-} Reading;
-
-
-typedef struct Wire {
-	uint8_t		header;
-	uint8_t		reserved;
-	uint16_t	flags;
-	
-	Reading		payload;
 	
 	uint32_t	checksum;
 	uint32_t	footer;
-} Wire;
+} ReadingPacket;
 
 volatile int count = 0;
-uint32_t voltage = 0x00;
-uint32_t current = 0x00;
-uint32_t period = 0x00;
-uint8_t checksum = 0x00;
-
 
 void ZX_Handler(uint32_t id, uint32_t mask) {	
 	ioport_toggle_pin_level(LED1_GPIO);
+	ioport_toggle_pin_level(FP_LED2_GPIO);
 	
-	if (count != 0) {
-		voltage = 0x00;
-		current = 0x00;
-		period = 0x00;
-		checksum = 0x00;
+	ReadingPacket *packet = (ReadingPacket*)malloc(sizeof(ReadingPacket));
+	packet->header = 0x59;
+	packet->reserved = 0x0000;
+	packet->flags = ADE7753_FLAGS_NONE;
+	packet->footer = 0x5254464d;
 	
 	
-		ade7753_read(0x17, &voltage, 3, &checksum);
-		ade7753_read(0x16, &current, 3, &checksum);
-		ade7753_read(0x27, &period, 2, &checksum);
-		printf("%d,%d,%d,%d\r\n", count, voltage, current, period);
+	if (count >= 0 || count == -1) {
+		ade7753_read(ADE7753_REGISTER_VRMS,   &(packet->voltage), ADE7753_REGISTER_VRMS_BYTES,    &(packet->voltage_checksum));
+		ade7753_read(ADE7753_REGISTER_IRMS,   &(packet->current), ADE7753_REGISTER_IRMS_BYTES,    &(packet->current_checksum));
+		ade7753_read(ADE7753_REGISTER_PERIOD, &(packet->period),  ADE7753_REGISTER_PERIOD_BYTES,  &(packet->period_checksum));
+		printf("%d,%d,%d,%d\r\n", count, packet->voltage, packet->current, packet->period);
 		
 		count--;
 	}
+	
+	free(packet);
 }
 
 void FP_LOAD_Handler(uint32_t id, uint32_t mask) {	
@@ -116,6 +114,11 @@ void FP_LOAD_Handler(uint32_t id, uint32_t mask) {
 }
 
 int main (void) {
+	
+	
+	
+	
+	
 	sysclk_init();
 	board_init();
 		
@@ -134,21 +137,17 @@ int main (void) {
 	ioport_set_pin_level(LED1_GPIO, false);
 	ioport_set_pin_level(LED2_GPIO, false);
 	ioport_set_pin_level(LED3_GPIO, false);
-	ioport_set_pin_level(FP_LED0_GPIO, false);
+	ioport_set_pin_level(FP_LED0_GPIO, true);
 	ioport_set_pin_level(FP_LED1_GPIO, false);
 	ioport_set_pin_level(FP_LED2_GPIO, false);
 	ioport_set_pin_level(FP_LED3_GPIO, true);
-	ioport_set_pin_level(RELAY_1_GPIO, false);
-	ioport_set_pin_level(RELAY_2_GPIO, false);
+	ioport_set_pin_level(RELAY_1_GPIO, true);
+	ioport_set_pin_level(RELAY_2_GPIO, true);
 	
 	/* Initialize the console uart */
 	configure_console();
 
-	spi_master_initialize();
-	 int a = 0;
-	//for (;;){
-	//	printf("Up: %d Left %d Right %d Down %d Load: %d Back %d Select %d Q1 %d Q2 %d\r\n", ioport_get_pin_level(FP_BUTTON_UP_GPIO), ioport_get_pin_level(FP_BUTTON_LEFT_GPIO), ioport_get_pin_level(FP_BUTTON_RIGHT_GPIO), ioport_get_pin_level(FP_BUTTON_DOWN_GPIO), ioport_get_pin_level(FP_BUTTON_LOAD_GPIO), ioport_get_pin_level(FP_BUTTON_BACK_GPIO), ioport_get_pin_level(FP_BUTTON_SELECT_GPIO), ioport_get_pin_level(FP_ENCODER_Q1_GPIO), ioport_get_pin_level(FP_ENCODER_Q2_GPIO));
-	//}
+	spi_master_initialize();	
 	
 	puts(STRING_HEADER);
 		
@@ -207,7 +206,7 @@ int main (void) {
 			case 'g':
 			
 				printf("Setting GAIN = 2 (I think)\r\n");
-				uint8_t gain_register = ADE7753_REGISTER_GAIN | ADE7753_WRITE_MASK;
+				uint8_t gain_register = ADE7753_REGISTER_GAIN;
 				uint8_t gain_value = 0b00000000;
 				uint8_t gain_checksum = 0;
 				
@@ -255,6 +254,9 @@ int main (void) {
 				break;
 			case 'm':
 				count = 100;
+				break;
+			case ',':
+				count = -1;
 				break;
 		}
 	}

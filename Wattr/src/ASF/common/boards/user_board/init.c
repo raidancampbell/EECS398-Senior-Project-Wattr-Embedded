@@ -61,6 +61,9 @@ void board_init(void)
 	WDT->WDT_MR = WDT_MR_WDDIS;
 	
 	ioport_init();
+	
+	fpu_enable();
+	
 
 	ioport_set_pin_dir(LED1_GPIO, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_level(LED1_GPIO, LED1_INACTIVE_LEVEL);
