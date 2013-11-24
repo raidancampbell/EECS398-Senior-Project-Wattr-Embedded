@@ -62,8 +62,8 @@ typedef struct ReadingPacket {
 	uint32_t voltage;				// ADE7753_REGISTER_VRMS
 	uint32_t current;				// ADE7753_REGISTER_IRMS
 	uint32_t period;				// ADE7753_REGISTER_PERIOD
-	uint32_t active_power;			// ADE7753_REGISTER_RAENERGY
-	uint32_t reactive_power;		// ADE7753_REGISTER_LVARENERGY
+	 int32_t active_power;			// ADE7753_REGISTER_RAENERGY
+	 int32_t reactive_power;		// ADE7753_REGISTER_LVARENERGY
 	uint32_t apparent_power;		// ADE7753_REGISTER_LVAENERGY
 	uint32_t phase_angle;			// TODO: Calculation
 	uint32_t power_factor;			// TODO: Calculation
@@ -85,12 +85,16 @@ typedef struct ReadingPacket {
 volatile int count = 0;
 volatile int cycle_count = 0;
 
+void spam_measurment(ReadingPacket *packet) {
+	printf("%d,%d,%d,%d,%d,%d,%d,%d\r\n", count, cycle_count, packet->voltage, packet->current, packet->period, packet->active_power, packet->apparent_power, packet->reactive_power);
+}
+
 
 void ZX_Handler(uint32_t id, uint32_t mask) {	
 	ioport_toggle_pin_level(LED1_GPIO);
 	ioport_toggle_pin_level(FP_LED2_GPIO);
 	
-	ReadingPacket *packet = (ReadingPacket*)malloc(sizeof(ReadingPacket));
+	ReadingPacket *packet = (ReadingPacket*)calloc(1, sizeof(ReadingPacket));
 	packet->header = 0x59;
 	packet->reserved = 0x0000;
 	packet->flags = ADE7753_FLAGS_NONE;
@@ -102,24 +106,18 @@ void ZX_Handler(uint32_t id, uint32_t mask) {
 		ade7753_read(ADE7753_REGISTER_IRMS,   &(packet->current), ADE7753_REGISTER_IRMS_BYTES,    &(packet->current_checksum));
 		ade7753_read(ADE7753_REGISTER_PERIOD, &(packet->period),  ADE7753_REGISTER_PERIOD_BYTES,  &(packet->period_checksum));
 		
-		
-		
 		if (cycle_count == 120) {
 			ade7753_read(ADE7753_REGISTER_LAENERGY,   &(packet->active_power),   ADE7753_REGISTER_LAENERGY_BYTES,    &(packet->active_power_checksum));
 			ade7753_read(ADE7753_REGISTER_LVAENERGY,  &(packet->apparent_power), ADE7753_REGISTER_LVAENERGY_BYTES,   &(packet->apparent_power_checksum));
 			ade7753_read(ADE7753_REGISTER_LVARENERGY, &(packet->reactive_power), ADE7753_REGISTER_LVARENERGY_BYTES,  &(packet->reactive_power_checksum));
 			
 			
-			printf("%d,%d,%d,%d,%d,%d,%d,%d\r\n", count, cycle_count, packet->voltage, packet->current, packet->period, packet->active_power, packet->apparent_power, packet->reactive_power);
 			cycle_count = 0;
 		} else {
-			printf("%d,%d,%d,%d,%d\r\n", count, cycle_count, packet->voltage, packet->current, packet->period);
 			cycle_count++;
 		}
 		
-		
-		
-		
+		spam_measurment(packet);
 		
 		if (count != -2) {
 			count--;
@@ -136,11 +134,6 @@ void FP_LOAD_Handler(uint32_t id, uint32_t mask) {
 }
 
 int main (void) {
-	
-	
-	
-	
-	
 	sysclk_init();
 	board_init();
 		
@@ -175,17 +168,10 @@ int main (void) {
 	// ...to have a current gain of 2...
 	uint8_t  gain		 = ADE7753_GAIN_PGA1_2;
 	ade7753_write(ADE7753_REGISTER_GAIN, &gain, ADE7753_REGISTER_GAIN_BYTES);
-	
 	// ...and to measure energy for 120 half line cycles (e.g. 60 cycles or 1 second(ish))
 	uint16_t line_cycles = 120;
 	ade7753_write(ADE7753_REGISTER_LINECYC, &line_cycles, ADE7753_REGISTER_LINECYC_BYTES);
 	
-	line_cycles = 0;
-	uint8_t line_check;
-	
-	ade7753_read(ADE7753_REGISTER_LINECYC, &line_cycles, ADE7753_REGISTER_LINECYC_BYTES, &line_check);
-	
-	printf("%d,%d\r\n", line_cycles, line_check);
 	
 	puts(STRING_HEADER);
 		
@@ -241,32 +227,6 @@ int main (void) {
 				ade7753_read(0x17, &cmd, 3, &checksum);
 				printf("Response 0x%x (%d) with a checksum of 0x%x %s \n\r", cmd, cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
 				break;
-			case 'g':
-			
-				printf("Setting GAIN = 2 (I think)\r\n");
-				uint8_t gain_register = ADE7753_REGISTER_GAIN;
-				uint8_t gain_value = 0b00000000;
-				uint8_t gain_checksum = 0;
-				
-				ade7753_read(ADE7753_REGISTER_GAIN, &gain_value, 1, &gain_checksum);
-				printf("Current Gain Before: %x\r\n", gain_value);
-				
-				gain_value = 0b00000001;
-				
-				ade7753_write(ADE7753_REGISTER_GAIN, &gain_value, 1);
-				
-				//spi_master_transfer(&gain_register, sizeof(gain_register));
-				//ade7753_read(gain_value, &gain_value, 1, &gain_checksum);
-				
-				gain_value = 0b00000000;
-				
-				
-				ade7753_read(ADE7753_REGISTER_GAIN, &gain_value, 1, &gain_checksum);
-				
-				printf("Current Gain After: %x\r\n", gain_value);
-				
-				break;
-			
 			case 'a':
 				printf("Reading the IRQEN Register\r\n");
 				ade7753_read(0x0A, &cmd, 2, &checksum);

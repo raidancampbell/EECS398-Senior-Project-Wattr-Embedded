@@ -93,8 +93,7 @@ void ade7753_write(uint8_t ic_register, uint32_t *data, uint8_t length) {
 		uint8_t lower_nibble = (*data) & 0xFF;
 		
 		spi_master_transfer(&upper_nibble, BITS8);	
-		spi_master_transfer(&lower_nibble, BITS8);	
-		
+		spi_master_transfer(&lower_nibble, BITS8);		
 	}
 }
 
