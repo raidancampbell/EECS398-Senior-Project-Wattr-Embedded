@@ -52,16 +52,14 @@ void spi_master_transfer(void *p_buf, uint32_t size) {
  * \param length The length (in bytes) of the register we are reading
  * \param checksum A pointer to where we want to store the checksum of the data we read
  */
-void ade7753_read(uint8_t ic_register, void *data, uint8_t length, uint8_t *checksum) {
+void ade7753_read(uint8_t ic_register, uint32_t *data, uint8_t length, uint8_t *checksum) {
 	// Tell the ADE7753 that we want to read the register
 	spi_master_transfer(&ic_register, sizeof(ic_register));
 
 	// Pointer magic to store the variable-length result from the register
 	uint8_t result = 0x00;
 	uint32_t running_result = 0x00000000;
-	
-	uint32_t *p_data;
-	p_data = data;
+
 	int i;
 	
 	// For how ever many bytes, read that
@@ -74,7 +72,7 @@ void ade7753_read(uint8_t ic_register, void *data, uint8_t length, uint8_t *chec
 		
 	}
 	
-	*p_data = running_result;
+	*data = running_result;
 
 	// Verify the result
 	*checksum = 0x3E;
@@ -108,12 +106,14 @@ printf("after: %x\r\n", gain_value);
 break;
 */
 
-void ade7753_write(uint8_t ic_register, void *data, uint8_t length) {
+void ade7753_write(uint8_t ic_register, uint32_t *data, uint8_t length) {
 	// I think this works
 	ic_register |= ADE7753_WRITE_MASK;
 	
 	spi_master_transfer(&ic_register, sizeof(ic_register));
-	//ade7753_read(*data, data, length, &ic_register);
+	
+	
+	ade7753_read(*data, data, length, &ic_register);
 	
 }
 

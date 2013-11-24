@@ -153,8 +153,8 @@ static uint32_t gs_ul_spi_clock = 500000;
 void spi_master_initialize(void);
 void spi_master_transfer(void *p_buf, uint32_t size);
 
-void ade7753_read(uint8_t ic_register, void *data, uint8_t length, uint8_t *checksum);
-void ade7753_write(uint8_t ic_register, void *data, uint8_t length);
+void ade7753_read(uint8_t ic_register, uint32_t *data, uint8_t length, uint8_t *checksum);
+void ade7753_write(uint8_t ic_register, uint32_t *data, uint8_t length);
 uint8_t verify_result(uint32_t *result, uint8_t *checksum);
 
 #endif /* ADE7753_H_ */

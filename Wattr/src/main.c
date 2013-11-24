@@ -77,7 +77,7 @@ typedef struct Wire {
 	uint8_t		reserved;
 	uint16_t	flags;
 	
-	//struct reading		payload;
+	Reading		payload;
 	
 	uint32_t	checksum;
 	uint32_t	footer;
@@ -92,7 +92,6 @@ uint8_t checksum = 0x00;
 
 void ZX_Handler(uint32_t id, uint32_t mask) {	
 	ioport_toggle_pin_level(LED1_GPIO);
-
 	
 	if (count != 0) {
 		voltage = 0x00;
@@ -116,97 +115,22 @@ void FP_LOAD_Handler(uint32_t id, uint32_t mask) {
 	ioport_toggle_pin_level(RELAY_2_GPIO);
 }
 
-void FP_BACK_Handler(uint32_t id, uint32_t mask) {
-	ioport_toggle_pin_level(FP_LED3_GPIO);
-	printf("***********************************************BACK\r\n");
-}
-
-void FP_LRUD_Handler(uint32_t id, uint32_t mask) {
-	ioport_toggle_pin_level(LED3_GPIO);
-	printf("Up: %d Left %d Right %d Down %d\r\n", ioport_get_pin_level(FP_BUTTON_UP_GPIO), ioport_get_pin_level(FP_BUTTON_LEFT_GPIO), ioport_get_pin_level(FP_BUTTON_RIGHT_GPIO), ioport_get_pin_level(FP_BUTTON_DOWN_GPIO));
-}
-
-
-void FP_SELECT_Handler(uint32_t id, uint32_t mask) {
-	ioport_toggle_pin_level(FP_LED3_GPIO);
-}
-
-void FP_ENCODER_Handler(uint32_t id, uint32_t mask) {
-	printf("%d %d\r\n", ioport_get_pin_level(FP_ENCODER_Q1_GPIO), ioport_get_pin_level(FP_ENCODER_Q2_GPIO));
-
-}
-
 int main (void) {
 	sysclk_init();
 	board_init();
-	
-	
+		
 	pmc_enable_periph_clk(PIN_ADE7753_ZX_ID);
 	pio_handler_set(PIN_ADE7753_ZX_PIO, PIN_ADE7753_ZX_ID, PIN_ADE7753_ZX_MASK, PIN_ADE7753_ZX_ATTR, ZX_Handler);
 	NVIC_EnableIRQ((IRQn_Type)PIN_ADE7753_ZX_ID);
 	pio_handler_set_priority(PIN_ADE7753_ZX_PIO, (IRQn_Type)PIN_ADE7753_ZX_ID, IRQ_PRIOR_PIO);
 	pio_enable_interrupt(PIN_ADE7753_ZX_PIO, PIN_ADE7753_ZX_MASK);
 	
-	/*pmc_enable_periph_clk(PIN_UART0_RTS_ID);
-	pio_handler_set(PIN_UART0_RTS_PIO, PIN_UART0_RTS_ID, PIN_UART0_RTS_MASK, PIN_UART0_RTS_ATTR, ZX_Handler);
-	NVIC_EnableIRQ((IRQn_Type)PIN_UART0_RTS_ID);
-	pio_handler_set_priority(PIN_UART0_RTS_PIO, (IRQn_Type)PIN_UART0_RTS_ID, IRQ_PRIOR_PIO);
-	pio_enable_interrupt(PIN_UART0_RTS_PIO, PIN_UART0_RTS_MASK);*/
-	
-	/*pmc_enable_periph_clk(PIN_FP_BUTTON_LOAD_ID);
+	pmc_enable_periph_clk(PIN_FP_BUTTON_LOAD_ID);
 	pio_handler_set(PIN_FP_BUTTON_LOAD_PIO, PIN_FP_BUTTON_LOAD_ID, PIN_FP_BUTTON_LOAD_MASK, PIN_FP_BUTTON_LOAD_ATTR, FP_LOAD_Handler);
 	NVIC_EnableIRQ((IRQn_Type)PIN_FP_BUTTON_LOAD_ID);
 	pio_handler_set_priority(PIN_FP_BUTTON_LOAD_PIO, (IRQn_Type)PIN_FP_BUTTON_LOAD_ID, IRQ_PRIOR_PIO);
 	pio_enable_interrupt(PIN_FP_BUTTON_LOAD_PIO, PIN_FP_BUTTON_LOAD_MASK);
-	
-	pmc_enable_periph_clk(PIN_FP_BUTTON_BACK_ID);
-	pio_handler_set(PIN_FP_BUTTON_BACK_PIO, PIN_FP_BUTTON_BACK_ID, PIN_FP_BUTTON_BACK_MASK, PIN_FP_BUTTON_BACK_ATTR, FP_BACK_Handler);
-	NVIC_EnableIRQ((IRQn_Type)PIN_FP_BUTTON_BACK_ID);
-	pio_handler_set_priority(PIN_FP_BUTTON_BACK_PIO, (IRQn_Type)PIN_FP_BUTTON_BACK_ID, IRQ_PRIOR_PIO);
-	pio_enable_interrupt(PIN_FP_BUTTON_BACK_PIO, PIN_FP_BUTTON_BACK_MASK);
-	
-	pmc_enable_periph_clk(PIN_FP_BUTTON_SELECT_ID);
-	pio_handler_set(PIN_FP_BUTTON_SELECT_PIO, PIN_FP_BUTTON_SELECT_ID, PIN_FP_BUTTON_SELECT_MASK, PIN_FP_BUTTON_SELECT_ATTR, FP_SELECT_Handler);
-	NVIC_EnableIRQ((IRQn_Type)PIN_FP_BUTTON_SELECT_ID);
-	pio_handler_set_priority(PIN_FP_BUTTON_SELECT_PIO, (IRQn_Type)PIN_FP_BUTTON_SELECT_ID, IRQ_PRIOR_PIO);
-	pio_enable_interrupt(PIN_FP_BUTTON_SELECT_PIO, PIN_FP_BUTTON_SELECT_MASK);
-	
-	pmc_enable_periph_clk(PIN_FP_BUTTON_UP_ID);
-	pio_handler_set(PIN_FP_BUTTON_UP_PIO, PIN_FP_BUTTON_UP_ID, PIN_FP_BUTTON_UP_MASK, PIN_FP_BUTTON_UP_ATTR, FP_LRUD_Handler);
-	NVIC_EnableIRQ((IRQn_Type)PIN_FP_BUTTON_UP_ID);
-	pio_handler_set_priority(PIN_FP_BUTTON_UP_PIO, (IRQn_Type)PIN_FP_BUTTON_UP_ID, IRQ_PRIOR_PIO);
-	pio_enable_interrupt(PIN_FP_BUTTON_UP_PIO, PIN_FP_BUTTON_UP_MASK);
-	
-	pmc_enable_periph_clk(PIN_FP_BUTTON_DOWN_ID);
-	pio_handler_set(PIN_FP_BUTTON_DOWN_PIO, PIN_FP_BUTTON_DOWN_ID, PIN_FP_BUTTON_DOWN_MASK, PIN_FP_BUTTON_DOWN_ATTR, FP_LRUD_Handler);
-	NVIC_EnableIRQ((IRQn_Type)PIN_FP_BUTTON_DOWN_ID);
-	pio_handler_set_priority(PIN_FP_BUTTON_DOWN_PIO, (IRQn_Type)PIN_FP_BUTTON_DOWN_ID, IRQ_PRIOR_PIO);
-	pio_enable_interrupt(PIN_FP_BUTTON_DOWN_PIO, PIN_FP_BUTTON_DOWN_MASK);
-	
-	pmc_enable_periph_clk(PIN_FP_BUTTON_LEFT_ID);
-	pio_handler_set(PIN_FP_BUTTON_LEFT_PIO, PIN_FP_BUTTON_LEFT_ID, PIN_FP_BUTTON_LEFT_MASK, PIN_FP_BUTTON_LEFT_ATTR, FP_LRUD_Handler);
-	NVIC_EnableIRQ((IRQn_Type)PIN_FP_BUTTON_LEFT_ID);
-	pio_handler_set_priority(PIN_FP_BUTTON_LEFT_PIO, (IRQn_Type)PIN_FP_BUTTON_LEFT_ID, IRQ_PRIOR_PIO);
-	pio_enable_interrupt(PIN_FP_BUTTON_LEFT_PIO, PIN_FP_BUTTON_LEFT_MASK);
-	
-	pmc_enable_periph_clk(PIN_FP_BUTTON_RIGHT_ID);
-	pio_handler_set(PIN_FP_BUTTON_RIGHT_PIO, PIN_FP_BUTTON_RIGHT_ID, PIN_FP_BUTTON_RIGHT_MASK, PIN_FP_BUTTON_RIGHT_ATTR, FP_LRUD_Handler);
-	NVIC_EnableIRQ((IRQn_Type)PIN_FP_BUTTON_RIGHT_ID);
-	pio_handler_set_priority(PIN_FP_BUTTON_RIGHT_PIO, (IRQn_Type)PIN_FP_BUTTON_RIGHT_ID, IRQ_PRIOR_PIO);
-	pio_enable_interrupt(PIN_FP_BUTTON_RIGHT_PIO, PIN_FP_BUTTON_RIGHT_MASK);*/
-	
-	/*pmc_enable_periph_clk(PIN_FP_ENCODER_Q1_ID);
-	pio_handler_set(PIN_FP_ENCODER_Q1_PIO, PIN_FP_ENCODER_Q1_ID, PIN_FP_ENCODER_Q1_MASK, PIN_FP_ENCODER_Q1_ATTR, FP_ENCODER_Handler);
-	NVIC_EnableIRQ((IRQn_Type)PIN_FP_ENCODER_Q1_ID);
-	pio_handler_set_priority(PIN_FP_ENCODER_Q1_PIO, (IRQn_Type)PIN_FP_ENCODER_Q1_ID, IRQ_PRIOR_PIO);
-	pio_enable_interrupt(PIN_FP_ENCODER_Q1_PIO, PIN_FP_ENCODER_Q1_MASK);
-	
-	pmc_enable_periph_clk(PIN_FP_ENCODER_Q2_ID);
-	pio_handler_set(PIN_FP_ENCODER_Q2_PIO, PIN_FP_ENCODER_Q2_ID, PIN_FP_ENCODER_Q2_MASK, PIN_FP_ENCODER_Q2_ATTR, FP_ENCODER_Handler);
-	NVIC_EnableIRQ((IRQn_Type)PIN_FP_ENCODER_Q2_ID);
-	pio_handler_set_priority(PIN_FP_ENCODER_Q2_PIO, (IRQn_Type)PIN_FP_ENCODER_Q2_ID, IRQ_PRIOR_PIO);
-	pio_enable_interrupt(PIN_FP_ENCODER_Q2_PIO, PIN_FP_ENCODER_Q2_MASK);*/
-			
+				
 	ioport_set_pin_level(LED1_GPIO, false);
 	ioport_set_pin_level(LED2_GPIO, false);
 	ioport_set_pin_level(LED3_GPIO, false);
@@ -217,21 +141,17 @@ int main (void) {
 	ioport_set_pin_level(RELAY_1_GPIO, false);
 	ioport_set_pin_level(RELAY_2_GPIO, false);
 	
-	
-	
 	/* Initialize the console uart */
 	configure_console();
 
 	spi_master_initialize();
 	 int a = 0;
-	for (;;){
-		printf("Up: %d Left %d Right %d Down %d Load: %d Back %d Select %d Q1 %d Q2 %d\r\n", ioport_get_pin_level(FP_BUTTON_UP_GPIO), ioport_get_pin_level(FP_BUTTON_LEFT_GPIO), ioport_get_pin_level(FP_BUTTON_RIGHT_GPIO), ioport_get_pin_level(FP_BUTTON_DOWN_GPIO), ioport_get_pin_level(FP_BUTTON_LOAD_GPIO), ioport_get_pin_level(FP_BUTTON_BACK_GPIO), ioport_get_pin_level(FP_BUTTON_SELECT_GPIO), ioport_get_pin_level(FP_ENCODER_Q1_GPIO), ioport_get_pin_level(FP_ENCODER_Q2_GPIO));
-	}
+	//for (;;){
+	//	printf("Up: %d Left %d Right %d Down %d Load: %d Back %d Select %d Q1 %d Q2 %d\r\n", ioport_get_pin_level(FP_BUTTON_UP_GPIO), ioport_get_pin_level(FP_BUTTON_LEFT_GPIO), ioport_get_pin_level(FP_BUTTON_RIGHT_GPIO), ioport_get_pin_level(FP_BUTTON_DOWN_GPIO), ioport_get_pin_level(FP_BUTTON_LOAD_GPIO), ioport_get_pin_level(FP_BUTTON_BACK_GPIO), ioport_get_pin_level(FP_BUTTON_SELECT_GPIO), ioport_get_pin_level(FP_ENCODER_Q1_GPIO), ioport_get_pin_level(FP_ENCODER_Q2_GPIO));
+	//}
 	
-
 	puts(STRING_HEADER);
-	
-	
+		
 	char input;
 	uint32_t cmd = 0x00;
 	uint8_t checksum = 0x00;
@@ -296,8 +216,10 @@ int main (void) {
 				
 				gain_value = 0b00000001;
 				
-				spi_master_transfer(&gain_register, sizeof(gain_register));
-				ade7753_read(gain_value, &gain_value, 1, &gain_checksum);
+				ade7753_write(ADE7753_REGISTER_GAIN, &gain_value, 1);
+				
+				//spi_master_transfer(&gain_register, sizeof(gain_register));
+				//ade7753_read(gain_value, &gain_value, 1, &gain_checksum);
 				
 				gain_value = 0b00000000;
 				
