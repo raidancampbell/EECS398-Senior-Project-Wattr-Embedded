@@ -16,11 +16,13 @@
           <option id="common.services.ioport" value="Add" config="" content-id="Atmel.ASF" />
           <option id="common.services.basic.serial" value="Add" config="" content-id="Atmel.ASF" />
           <option id="common.utils.stdio.stdio_serial" value="Add" config="" content-id="Atmel.ASF" />
-          <option id="sam.drivers.spi" value="Add" config="" content-id="Atmel.ASF" />
           <option id="sam.drivers.acc" value="Add" config="" content-id="Atmel.ASF" />
           <option id="sam.drivers.afec" value="Add" config="" content-id="Atmel.ASF" />
           <option id="sam.drivers.pio" value="Add" config="" content-id="Atmel.ASF" />
+          <option id="sam.drivers.spi" value="Add" config="" content-id="Atmel.ASF" />
           <option id="sam.drivers.uart" value="Add" config="" content-id="Atmel.ASF" />
+          <option id="sam.drivers.gmac" value="Add" config="" content-id="Atmel.ASF" />
+          <option id="sam.components.ethernet_phy.ksz8051mnl" value="Add" config="" content-id="Atmel.ASF" />
           <option id="sam.utils.linker_scripts#atsam4e16" value="Add" config="" content-id="Atmel.ASF" />
         </options>
         <configurations>
@@ -189,6 +191,12 @@
           <file path="src/ASF/common/utils/stdio/stdio_serial/stdio_serial.h" framework="" version="3.12.1" source="common\utils\stdio\stdio_serial\stdio_serial.h" changed="False" content-id="Atmel.ASF" />
           <file path="src/ASF/sam/drivers/pio/pio_handler.c" framework="" version="3.12.1" source="sam\drivers\pio\pio_handler.c" changed="False" content-id="Atmel.ASF" />
           <file path="src/ASF/sam/drivers/pio/pio_handler.h" framework="" version="3.12.1" source="sam\drivers\pio\pio_handler.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/sam/components/ethernet_phy/ksz8051mnl/ethernet_phy.c" framework="" version="3.11.0" source="sam\components\ethernet_phy\ksz8051mnl\ethernet_phy.c" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/sam/components/ethernet_phy/ksz8051mnl/ethernet_phy.h" framework="" version="3.11.0" source="sam\components\ethernet_phy\ksz8051mnl\ethernet_phy.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/sam/drivers/gmac/gmac.c" framework="" version="3.11.0" source="sam\drivers\gmac\gmac.c" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/sam/drivers/gmac/gmac.h" framework="" version="3.11.0" source="sam\drivers\gmac\gmac.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/Config/conf_eth.h" framework="" version="3.11.0" source="sam\drivers\gmac\module_config\conf_eth.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/sam/components/ethernet_phy/documentation.h" framework="" version="3.11.0" source="sam\components\ethernet_phy\documentation.h" changed="False" content-id="Atmel.ASF" />
         </files>
         <documentation help="http://asf.atmel.com/docs/3.12.1/common.applications.user_application.user_board.sam4e/html/index.html" />
         <offline-documentation help="" />
@@ -287,6 +295,8 @@
       <Value>../src/ASF/common/services/serial</Value>
       <Value>../src/ASF/common/services/sleepmgr</Value>
       <Value>../src/ASF/common/utils/stdio/stdio_serial</Value>
+      <Value>../src/ASF/sam/components/ethernet_phy/ksz8051mnl</Value>
+      <Value>../src/ASF/sam/drivers/gmac</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize for size (-Os)</armgcc.compiler.optimization.level>
@@ -340,6 +350,8 @@
       <Value>../src/ASF/common/services/serial</Value>
       <Value>../src/ASF/common/services/sleepmgr</Value>
       <Value>../src/ASF/common/utils/stdio/stdio_serial</Value>
+      <Value>../src/ASF/sam/components/ethernet_phy/ksz8051mnl</Value>
+      <Value>../src/ASF/sam/drivers/gmac</Value>
     </ListValues>
   </armgcc.assembler.general.IncludePaths>
   <armgcc.preprocessingassembler.general.AssemblerFlags>-DARM_MATH_CM4=true -DBOARD=USER_BOARD -Dprintf=iprintf</armgcc.preprocessingassembler.general.AssemblerFlags>
@@ -376,6 +388,8 @@
       <Value>../src/ASF/common/services/serial</Value>
       <Value>../src/ASF/common/services/sleepmgr</Value>
       <Value>../src/ASF/common/utils/stdio/stdio_serial</Value>
+      <Value>../src/ASF/sam/components/ethernet_phy/ksz8051mnl</Value>
+      <Value>../src/ASF/sam/drivers/gmac</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
 </ArmGcc>
@@ -434,9 +448,10 @@
       <Value>../src/ASF/common/services/sleepmgr</Value>
       <Value>../src/ASF/common/utils/stdio/stdio_serial</Value>
       <Value>../src/components</Value>
+      <Value>../src/ASF/sam/components/ethernet_phy/ksz8051mnl</Value>
+      <Value>../src/ASF/sam/drivers/gmac</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
-  <armgcc.compiler.optimization.level>Optimize (-O1)</armgcc.compiler.optimization.level>
   <armgcc.compiler.optimization.OtherFlags>-fdata-sections</armgcc.compiler.optimization.OtherFlags>
   <armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
   <armgcc.compiler.optimization.DebugLevel>Maximum (-g3)</armgcc.compiler.optimization.DebugLevel>
@@ -488,6 +503,8 @@
       <Value>../src/ASF/common/services/serial</Value>
       <Value>../src/ASF/common/services/sleepmgr</Value>
       <Value>../src/ASF/common/utils/stdio/stdio_serial</Value>
+      <Value>../src/ASF/sam/components/ethernet_phy/ksz8051mnl</Value>
+      <Value>../src/ASF/sam/drivers/gmac</Value>
     </ListValues>
   </armgcc.assembler.general.IncludePaths>
   <armgcc.assembler.debugging.DebugLevel>Default (-g)</armgcc.assembler.debugging.DebugLevel>
@@ -525,6 +542,8 @@
       <Value>../src/ASF/common/services/serial</Value>
       <Value>../src/ASF/common/services/sleepmgr</Value>
       <Value>../src/ASF/common/utils/stdio/stdio_serial</Value>
+      <Value>../src/ASF/sam/components/ethernet_phy/ksz8051mnl</Value>
+      <Value>../src/ASF/sam/drivers/gmac</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
   <armgcc.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</armgcc.preprocessingassembler.debugging.DebugLevel>
@@ -605,6 +624,15 @@
     <Compile Include="src\ASF\common\utils\stdio\write.c">
       <SubType>compile</SubType>
     </Compile>
+    <None Include="src\ASF\sam\components\ethernet_phy\documentation.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\sam\components\ethernet_phy\ksz8051mnl\ethernet_phy.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\sam\components\ethernet_phy\ksz8051mnl\ethernet_phy.h">
+      <SubType>compile</SubType>
+    </None>
     <Compile Include="src\ASF\sam\drivers\acc\acc.c">
       <SubType>compile</SubType>
     </Compile>
@@ -615,6 +643,12 @@
       <SubType>compile</SubType>
     </Compile>
     <None Include="src\ASF\sam\drivers\afec\afec.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\sam\drivers\gmac\gmac.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\sam\drivers\gmac\gmac.h">
       <SubType>compile</SubType>
     </None>
     <Compile Include="src\ASF\sam\drivers\pio\pio.c">
@@ -674,6 +708,9 @@
     <Compile Include="src\components\AFE\ade7753.h">
       <SubType>compile</SubType>
     </Compile>
+    <None Include="src\config\conf_eth.h">
+      <SubType>compile</SubType>
+    </None>
     <Compile Include="src\main.c">
       <SubType>compile</SubType>
     </Compile>
@@ -1045,9 +1082,13 @@
     <Folder Include="src\ASF\common\utils\stdio\" />
     <Folder Include="src\ASF\common\utils\stdio\stdio_serial\" />
     <Folder Include="src\ASF\sam\" />
+    <Folder Include="src\ASF\sam\components\" />
+    <Folder Include="src\ASF\sam\components\ethernet_phy\" />
+    <Folder Include="src\ASF\sam\components\ethernet_phy\ksz8051mnl\" />
     <Folder Include="src\ASF\sam\drivers\" />
     <Folder Include="src\ASF\sam\drivers\acc\" />
     <Folder Include="src\ASF\sam\drivers\afec\" />
+    <Folder Include="src\ASF\sam\drivers\gmac\" />
     <Folder Include="src\ASF\sam\drivers\pio\" />
     <Folder Include="src\ASF\sam\drivers\pmc\" />
     <Folder Include="src\ASF\sam\drivers\spi\" />

@@ -85,23 +85,34 @@ typedef struct ReadingPacket {
 volatile int count = 0;
 volatile int cycle_count = 0;
 
+volatile float32_t line_voltage = 3.14;
+
 void spam_measurment(ReadingPacket *packet) {
-	printf("%d,%d,%d,%d,%d,%d,%d,%d\r\n", count, cycle_count, packet->voltage, packet->current, packet->period, packet->active_power, packet->apparent_power, packet->reactive_power);
+	line_voltage = (float32_t)(packet->voltage);
+	line_voltage *= 0.000237748f;
+	
+	line_voltage -= 0.14427f;
+	
+	
+	//printf("%f\r\n", (uint32_t)line_voltage);
+	printf("%d,%d,%d,%d,%d,%d,%d,%d\r\n", count, cycle_count, (uint32_t)line_voltage/*packet->voltage*/, packet->current, packet->period, packet->active_power, packet->apparent_power, packet->reactive_power);
 }
+
+
 
 
 void ZX_Handler(uint32_t id, uint32_t mask) {	
 	ioport_toggle_pin_level(LED1_GPIO);
 	ioport_toggle_pin_level(FP_LED2_GPIO);
 	
-	ReadingPacket *packet = (ReadingPacket*)calloc(1, sizeof(ReadingPacket));
-	packet->header = 0x59;
-	packet->reserved = 0x0000;
-	packet->flags = ADE7753_FLAGS_NONE;
-	packet->footer = 0x5254464d;
-	
-	
 	if (count >= 0 || count == -2) {
+		ReadingPacket *packet = (ReadingPacket*)calloc(1, sizeof(ReadingPacket));
+		packet->header = 0x59;
+		packet->reserved = 0x0000;
+		packet->flags = ADE7753_FLAGS_NONE;
+		packet->footer = 0x5254464d;
+		
+		
 		ade7753_read(ADE7753_REGISTER_VRMS,   &(packet->voltage), ADE7753_REGISTER_VRMS_BYTES,    &(packet->voltage_checksum));
 		ade7753_read(ADE7753_REGISTER_IRMS,   &(packet->current), ADE7753_REGISTER_IRMS_BYTES,    &(packet->current_checksum));
 		ade7753_read(ADE7753_REGISTER_PERIOD, &(packet->period),  ADE7753_REGISTER_PERIOD_BYTES,  &(packet->period_checksum));
@@ -122,9 +133,9 @@ void ZX_Handler(uint32_t id, uint32_t mask) {
 		if (count != -2) {
 			count--;
 		}
+		
+		free(packet);
 	}
-	
-	free(packet);
 }
 
 void FP_LOAD_Handler(uint32_t id, uint32_t mask) {	
@@ -134,6 +145,18 @@ void FP_LOAD_Handler(uint32_t id, uint32_t mask) {
 }
 
 int main (void) {
+	volatile uint32_t foo = 3;
+	
+	volatile float32_t bar = (float32_t)foo;
+	
+	bar += 3.0;
+	
+	
+	
+	
+	
+	
+	
 	sysclk_init();
 	board_init();
 		
@@ -172,6 +195,7 @@ int main (void) {
 	uint16_t line_cycles = 120;
 	ade7753_write(ADE7753_REGISTER_LINECYC, &line_cycles, ADE7753_REGISTER_LINECYC_BYTES);
 	
+
 	
 	puts(STRING_HEADER);
 		
@@ -179,6 +203,7 @@ int main (void) {
 	uint32_t cmd = 0x00;
 	uint8_t checksum = 0x00;
 	
+		printf("%d\r\n", (int)bar);
 	uint32_t samples[10] = {0,0,0,0,0,0,0,0,0,0};
 	uint8_t sample_checksum[10] = {0,0,0,0,0,0,0,0,0,0};
 		
@@ -255,6 +280,9 @@ int main (void) {
 				break;
 			case ',':
 				count = -2;
+				break;
+			case '[':
+				ade7753_calibrate_watt();
 				break;
 		}
 	}

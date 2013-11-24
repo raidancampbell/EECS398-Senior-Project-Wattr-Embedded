@@ -105,6 +105,11 @@ void board_init(void)
 	
 	
 	
+	ioport_set_pin_input_mode(PIN_ADE7753_IRQ_GPIO, PIN_ADE7753_IRQ_FLAGS, PIN_ADE7753_IRQ_SENSE);
+	
+	
+	
+	
 	
 	ioport_set_pin_input_mode(UART0_RTS_GPIO, UART0_RTS_FLAGS, UART0_RTS_SENSE);
 	
@@ -116,6 +121,15 @@ void board_init(void)
 	ioport_set_pin_peripheral_mode(SPI_SPCK_GPIO, SPI_SPCK_FLAGS);
 	
 	ioport_set_pin_peripheral_mode(SPI_NPCS1_PC4_GPIO, SPI_NPCS1_PC4_FLAGS);
+	
+	
+#define PHY_POWER_CTL PIO_PC25_IDX
+	ioport_set_pin_dir(PHY_POWER_CTL, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(PHY_POWER_CTL, false);
+
+#define PHY_POWER_RST PIO_PC11_IDX
+	ioport_set_pin_dir(PHY_POWER_RST, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(PHY_POWER_RST, true);
 	
 
 }

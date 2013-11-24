@@ -68,6 +68,12 @@
 // From module: Delay routines
 #include <delay.h>
 
+// From module: Ethernet MAC (GMAC)
+#include <gmac.h>
+
+// From module: Ethernet Physical Transceiver (ksz8051mnl)
+#include <ethernet_phy.h>
+
 // From module: Generic board support
 #include <board.h>
 

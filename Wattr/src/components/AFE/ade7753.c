@@ -118,3 +118,66 @@ uint8_t verify_result(uint32_t *result, uint8_t *checksum) {
 	
 	return (ones == (*checksum));
 }
+
+
+void ade7753_calibrate_watt(void) {
+	char input; 
+	
+	uint32_t cfdn_int = 336;
+	ade7753_write(ADE7753_REGISTER_CFDEN, &cfdn_int, ADE7753_REGISTER_CFDEN_BYTES);
+	
+	printf("Apply %dV to the input and %dA to the output. PF:1 Press any key to continue.\r\n", 120, 7);
+	usart_serial_getchar(UART0, &input);
+	
+	uint32_t linecyc_int = 0x1C;
+	ade7753_write(ADE7753_REGISTER_LINECYC, &linecyc_int, ADE7753_REGISTER_LINECYC_BYTES);
+	
+	uint32_t mode_register = 0x0080;
+	ade7753_write(ADE7753_REGISTER_MODE, &mode_register, ADE7753_REGISTER_MODE_BYTES);
+	
+	uint32_t irqen_register = 0x04;
+	ade7753_write(ADE7753_REGISTER_IRQEN, &irqen_register, ADE7753_REGISTER_IRQEN_BYTES);
+	
+	uint32_t interrupt_status = 0x00;
+	uint8_t interrupt_checksum = 0x00;
+	ade7753_read(ADE7753_REGISTER_RSTSTATUS, &interrupt_status, ADE7753_REGISTER_RSTSTATUS_BYTES, &interrupt_checksum);
+	
+	for (;;) {
+		if (ioport_get_pin_level(PIN_ADE7753_IRQ_GPIO)) {
+			break;
+		}
+	}
+	
+	interrupt_status = 0x00;
+	interrupt_checksum = 0x00;	
+	ade7753_read(ADE7753_REGISTER_RSTSTATUS, &interrupt_status, ADE7753_REGISTER_RSTSTATUS_BYTES, &interrupt_checksum);
+	
+	for (;;) {
+		if (ioport_get_pin_level(PIN_ADE7753_IRQ_GPIO)) {
+			break;
+		}
+	}
+	
+	uint32_t active_energy;
+	uint32_t apparant_energy;
+	uint32_t period;
+	
+	uint32_t active_energy_checksum;
+	uint32_t apparant_energy_checksum;
+	uint32_t period_checksum;
+	
+	ade7753_read(ADE7753_REGISTER_LAENERGY,  &active_energy,   ADE7753_REGISTER_LAENERGY_BYTES,  &active_energy_checksum);
+	ade7753_read(ADE7753_REGISTER_LVAENERGY, &apparant_energy, ADE7753_REGISTER_LVAENERGY_BYTES, &apparant_energy_checksum);
+	ade7753_read(ADE7753_REGISTER_PERIOD,    &period,          ADE7753_REGISTER_PERIOD_BYTES,    &period_checksum);
+	
+	printf("Active Energy: %d (%d); Apparant Energy: %d (%d); Period: %d (%d)\r\n", active_energy, active_energy_checksum, apparant_energy, apparant_energy_checksum, period, period_checksum);
+	
+}
+
+void ade7753_calibrate_watt_offset(void) {
+	
+}
+
+void ade7753_calibrate_phase(void) {
+	
+}

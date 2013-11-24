@@ -61,11 +61,19 @@ extern "C" {
 /**INDENT-ON**/
 /* @endcond */
 
+void FooBar(void)
+{
+	while (1) {
+	}
+}
+
+
 #ifdef __GNUC__
+
 /* Cortex-M4 core handlers */
 void Reset_Handler      (void  ) __attribute__ ((weak, alias("Dummy_Handler")));
 void NMI_Handler        ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
-void HardFault_Handler  ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
+void HardFault_Handler  ( void ) __attribute__ ((weak, alias("FooBar")));
 void MemManage_Handler  ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
 void BusFault_Handler   ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
 void UsageFault_Handler ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
@@ -118,6 +126,8 @@ void AES_Handler    ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
 void GMAC_Handler   ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
 void UART1_Handler  ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
 #endif /* __GNUC__ */
+
+
 
 #ifdef __ICCARM__
 /* Cortex-M4 core handlers */
