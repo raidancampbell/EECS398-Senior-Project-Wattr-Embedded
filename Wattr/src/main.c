@@ -284,6 +284,12 @@ int main (void) {
 			case '[':
 				ade7753_calibrate_watt();
 				break;
+			case ']':
+				ade7753_calibrate_watt_offset();
+				break;
+			case '\\':
+				ade7753_calibrate_phase();
+				break;
 		}
 	}
 }
