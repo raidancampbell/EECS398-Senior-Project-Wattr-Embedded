@@ -88,6 +88,21 @@ void board_init(void)
 
 
 	ioport_set_pin_input_mode(ADE7753_ZX_GPIO, ADE7753_ZX_FLAGS, ADE7753_ZX_SENSE);
+	ioport_set_pin_input_mode(FP_BUTTON_LOAD_GPIO, FP_BUTTON_LOAD_FLAGS, FP_BUTTON_LOAD_SENSE);
+	ioport_set_pin_input_mode(FP_BUTTON_BACK_GPIO, FP_BUTTON_BACK_FLAGS, FP_BUTTON_BACK_SENSE);
+	ioport_set_pin_input_mode(FP_BUTTON_SELECT_GPIO, FP_BUTTON_SELECT_FLAGS, FP_BUTTON_SELECT_SENSE);
+	
+	ioport_set_pin_input_mode(FP_BUTTON_UP_GPIO, FP_BUTTON_UP_FLAGS, FP_BUTTON_UP_SENSE);
+	ioport_set_pin_input_mode(FP_BUTTON_DOWN_GPIO, FP_BUTTON_DOWN_FLAGS, FP_BUTTON_DOWN_SENSE);
+	ioport_set_pin_input_mode(FP_BUTTON_LEFT_GPIO, FP_BUTTON_LEFT_FLAGS, FP_BUTTON_LEFT_SENSE);
+	ioport_set_pin_input_mode(FP_BUTTON_RIGHT_GPIO, FP_BUTTON_RIGHT_FLAGS, FP_BUTTON_RIGHT_SENSE);
+	
+	ioport_set_pin_input_mode(FP_ENCODER_Q1_GPIO, FP_ENCODER_Q1_FLAGS, FP_ENCODER_Q1_SENSE);
+	ioport_set_pin_input_mode(FP_ENCODER_Q2_GPIO, FP_ENCODER_Q2_FLAGS, FP_ENCODER_Q2_SENSE);
+	
+	
+	
+	
 	ioport_set_pin_input_mode(UART0_RTS_GPIO, UART0_RTS_FLAGS, UART0_RTS_SENSE);
 	
 
