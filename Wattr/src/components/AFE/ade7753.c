@@ -85,7 +85,17 @@ void ade7753_write(uint8_t ic_register, uint32_t *data, uint8_t length) {
 	ic_register |= ADE7753_WRITE_COMMAND;
 	
 	spi_master_transfer(&ic_register, sizeof(ic_register));
-	ade7753_read(*data, data, length, &ic_register);
+	
+	if (length == BITS8) {
+		spi_master_transfer(data, BITS8);	
+	} else if (length == BITS16) {
+		uint8_t upper_nibble = (*data) >> 8;
+		uint8_t lower_nibble = (*data) & 0xFF;
+		
+		spi_master_transfer(&upper_nibble, BITS8);	
+		spi_master_transfer(&lower_nibble, BITS8);	
+		
+	}
 }
 
 /**

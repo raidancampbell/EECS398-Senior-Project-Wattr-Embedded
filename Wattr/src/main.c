@@ -83,6 +83,8 @@ typedef struct ReadingPacket {
 } ReadingPacket;
 
 volatile int count = 0;
+volatile int cycle_count = 0;
+
 
 void ZX_Handler(uint32_t id, uint32_t mask) {	
 	ioport_toggle_pin_level(LED1_GPIO);
@@ -95,13 +97,33 @@ void ZX_Handler(uint32_t id, uint32_t mask) {
 	packet->footer = 0x5254464d;
 	
 	
-	if (count >= 0 || count == -1) {
+	if (count >= 0 || count == -2) {
 		ade7753_read(ADE7753_REGISTER_VRMS,   &(packet->voltage), ADE7753_REGISTER_VRMS_BYTES,    &(packet->voltage_checksum));
 		ade7753_read(ADE7753_REGISTER_IRMS,   &(packet->current), ADE7753_REGISTER_IRMS_BYTES,    &(packet->current_checksum));
 		ade7753_read(ADE7753_REGISTER_PERIOD, &(packet->period),  ADE7753_REGISTER_PERIOD_BYTES,  &(packet->period_checksum));
-		printf("%d,%d,%d,%d\r\n", count, packet->voltage, packet->current, packet->period);
 		
-		count--;
+		
+		
+		if (cycle_count == 120) {
+			ade7753_read(ADE7753_REGISTER_LAENERGY,   &(packet->active_power),   ADE7753_REGISTER_LAENERGY_BYTES,    &(packet->active_power_checksum));
+			ade7753_read(ADE7753_REGISTER_LVAENERGY,  &(packet->apparent_power), ADE7753_REGISTER_LVAENERGY_BYTES,   &(packet->apparent_power_checksum));
+			ade7753_read(ADE7753_REGISTER_LVARENERGY, &(packet->reactive_power), ADE7753_REGISTER_LVARENERGY_BYTES,  &(packet->reactive_power_checksum));
+			
+			
+			printf("%d,%d,%d,%d,%d,%d,%d,%d\r\n", count, cycle_count, packet->voltage, packet->current, packet->period, packet->active_power, packet->apparent_power, packet->reactive_power);
+			cycle_count = 0;
+		} else {
+			printf("%d,%d,%d,%d,%d\r\n", count, cycle_count, packet->voltage, packet->current, packet->period);
+			cycle_count++;
+		}
+		
+		
+		
+		
+		
+		if (count != -2) {
+			count--;
+		}
 	}
 	
 	free(packet);
@@ -148,6 +170,22 @@ int main (void) {
 	configure_console();
 
 	spi_master_initialize();	
+	
+	// We need to configure the ade7753...
+	// ...to have a current gain of 2...
+	uint8_t  gain		 = ADE7753_GAIN_PGA1_2;
+	ade7753_write(ADE7753_REGISTER_GAIN, &gain, ADE7753_REGISTER_GAIN_BYTES);
+	
+	// ...and to measure energy for 120 half line cycles (e.g. 60 cycles or 1 second(ish))
+	uint16_t line_cycles = 120;
+	ade7753_write(ADE7753_REGISTER_LINECYC, &line_cycles, ADE7753_REGISTER_LINECYC_BYTES);
+	
+	line_cycles = 0;
+	uint8_t line_check;
+	
+	ade7753_read(ADE7753_REGISTER_LINECYC, &line_cycles, ADE7753_REGISTER_LINECYC_BYTES, &line_check);
+	
+	printf("%d,%d\r\n", line_cycles, line_check);
 	
 	puts(STRING_HEADER);
 		
@@ -256,7 +294,7 @@ int main (void) {
 				count = 100;
 				break;
 			case ',':
-				count = -1;
+				count = -2;
 				break;
 		}
 	}

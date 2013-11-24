@@ -32,6 +32,23 @@ static uint32_t gs_ul_spi_clock = 500000;
 #define ADE7753_FLAGS_PKV					0x02;
 #define ADE7753_FLAGS_PKI					0x04;
 
+// Gains for the GAIN register
+#define ADE7753_GAIN_PGA1_1					0b00000000;
+#define ADE7753_GAIN_PGA1_2					0b00000001;
+#define ADE7753_GAIN_PGA1_4					0b00000010;
+#define ADE7753_GAIN_PGA1_8					0b00000011;
+#define ADE7753_GAIN_PGA1_16				0b00000100;
+
+#define ADE7753_GAIN_C1FS_0_5V				0b00000000;
+#define ADE7753_GAIN_C1FS_0_25V				0b00001000;
+#define ADE7753_GAIN_C1FS_0_125V			0b00010000;
+
+#define ADE7753_GAIN_PGA2_1					0b00000000;
+#define ADE7753_GAIN_PGA2_2					0b00100000;
+#define ADE7753_GAIN_PGA2_4					0b01000000;
+#define ADE7753_GAIN_PGA2_8					0b01100000;
+#define ADE7753_GAIN_PGA2_16				0b10000000;
+
 // Listing of registers on the chip. See Page 52-54 on the datasheet
 #define ADE7753_REGISTER_WAVEFORM			0x01
 #define ADE7753_REGISTER_WAVEFORM_BYTES		BITS24
