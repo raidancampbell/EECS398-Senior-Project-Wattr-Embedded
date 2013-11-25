@@ -93,6 +93,7 @@ void spam_measurment(ReadingPacket *packet) {
 	
 	line_voltage -= 0.14427f;
 	
+	printf("\r\n");
 	
 	//printf("%f\r\n", (uint32_t)line_voltage);
 	printf("%d,%d,%d,%d,%d,%d,%d,%d\r\n", count, cycle_count, (uint32_t)line_voltage/*packet->voltage*/, packet->current, packet->period, packet->active_power, packet->apparent_power, packet->reactive_power);
@@ -138,6 +139,15 @@ void ZX_Handler(uint32_t id, uint32_t mask) {
 	}
 }
 
+void FP_ENCODER_Handler(uint32_t id, uint32_t mask) {
+	if (ioport_get_pin_level(FP_ENCODER_Q1_GPIO) && !ioport_get_pin_level(FP_ENCODER_Q2_GPIO)) {
+		printf("CCW\r\n");
+	} else if (!ioport_get_pin_level(FP_ENCODER_Q1_GPIO) && ioport_get_pin_level(FP_ENCODER_Q2_GPIO)) {
+		printf("CW\r\n");
+	}
+
+}
+
 void FP_LOAD_Handler(uint32_t id, uint32_t mask) {	
 	ioport_toggle_pin_level(FP_LED0_GPIO);
 	ioport_toggle_pin_level(RELAY_1_GPIO);
@@ -171,6 +181,22 @@ int main (void) {
 	NVIC_EnableIRQ((IRQn_Type)PIN_FP_BUTTON_LOAD_ID);
 	pio_handler_set_priority(PIN_FP_BUTTON_LOAD_PIO, (IRQn_Type)PIN_FP_BUTTON_LOAD_ID, IRQ_PRIOR_PIO);
 	pio_enable_interrupt(PIN_FP_BUTTON_LOAD_PIO, PIN_FP_BUTTON_LOAD_MASK);
+	
+	pmc_enable_periph_clk(PIN_FP_ENCODER_Q1_ID);
+	pio_handler_set(PIN_FP_ENCODER_Q1_PIO, PIN_FP_ENCODER_Q1_ID, PIN_FP_ENCODER_Q1_MASK, PIN_FP_ENCODER_Q1_ATTR, FP_ENCODER_Handler);
+	NVIC_EnableIRQ((IRQn_Type)PIN_FP_ENCODER_Q1_ID);
+	pio_handler_set_priority(PIN_FP_ENCODER_Q1_PIO, (IRQn_Type)PIN_FP_ENCODER_Q1_ID, IRQ_PRIOR_PIO);
+	pio_enable_interrupt(PIN_FP_ENCODER_Q1_PIO, PIN_FP_ENCODER_Q1_MASK);
+	
+	pmc_enable_periph_clk(PIN_FP_ENCODER_Q2_ID);
+	pio_handler_set(PIN_FP_ENCODER_Q2_PIO, PIN_FP_ENCODER_Q2_ID, PIN_FP_ENCODER_Q2_MASK, PIN_FP_ENCODER_Q2_ATTR, FP_ENCODER_Handler);
+	NVIC_EnableIRQ((IRQn_Type)PIN_FP_ENCODER_Q2_ID);
+	pio_handler_set_priority(PIN_FP_ENCODER_Q2_PIO, (IRQn_Type)PIN_FP_ENCODER_Q2_ID, IRQ_PRIOR_PIO);
+	pio_enable_interrupt(PIN_FP_ENCODER_Q2_PIO, PIN_FP_ENCODER_Q2_MASK);
+	
+	
+	
+	
 				
 	ioport_set_pin_level(LED1_GPIO, false);
 	ioport_set_pin_level(LED2_GPIO, false);
@@ -203,6 +229,7 @@ int main (void) {
 	uint32_t cmd = 0x00;
 	uint8_t checksum = 0x00;
 	
+
 		printf("%d\r\n", (int)bar);
 	uint32_t samples[10] = {0,0,0,0,0,0,0,0,0,0};
 	uint8_t sample_checksum[10] = {0,0,0,0,0,0,0,0,0,0};

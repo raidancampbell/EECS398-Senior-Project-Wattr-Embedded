@@ -334,7 +334,6 @@
 #define PIN_FP_ENCODER_Q1_ATTR		(PIO_PULLUP | PIO_IT_RISE_EDGE)
 #define PIN_FP_ENCODER_Q1_IRQn		PIOC_IRQn
 
-
 // FP Encoder Q2 button
 #define FP_ENCODER_Q2_NAME			"Front Panel Encoder Q2"
 #define FP_ENCODER_Q2_GPIO			(PIO_PC15_IDX)
