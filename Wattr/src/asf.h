@@ -74,14 +74,29 @@
 // From module: Ethernet Physical Transceiver (ksz8051mnl)
 #include <ethernet_phy.h>
 
+// From module: FatFS file system
+#include <diskio.h>
+#include <ff.h>
+#include <ffconf.h>
+#include <integer.h>
+
 // From module: Generic board support
 #include <board.h>
+
+// From module: High Speed Multimedia Card Interface
+#include <hsmci.h>
 
 // From module: IOPORT - General purpose I/O service
 #include <ioport.h>
 
 // From module: Interrupt management - SAM implementation
 #include <interrupt.h>
+
+// From module: Memory Control Access Interface
+#include <ctrl_access.h>
+
+// From module: PDC - Peripheral DMA Controller Example
+#include <pdc.h>
 
 // From module: PIO - Parallel Input/Output Controller
 #include <pio.h>
@@ -93,11 +108,17 @@
 // From module: Part identification macros
 #include <parts.h>
 
+// From module: RTC - Real Time Clock
+#include <rtc.h>
+
 // From module: SAM FPU driver
 #include <fpu.h>
 
 // From module: SAM4E startup code
 #include <exceptions.h>
+
+// From module: SD/MMC stack on Multimedia Card interface
+#include <sd_mmc.h>
 
 // From module: SPI - Serial Peripheral Interface
 #include <spi.h>
@@ -108,6 +129,9 @@
 
 // From module: Standard serial I/O (stdio) - SAM implementation
 #include <stdio_serial.h>
+
+// From module: Supported ports of FatFS
+#include <diskio.h>
 
 // From module: System Clock Control - SAM4E implementation
 #include <sysclk.h>
