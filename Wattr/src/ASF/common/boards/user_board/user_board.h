@@ -387,7 +387,9 @@
 
 #define ADE7753_SPI_MODULE          SPI
 
-
+#define VFD_NRST PIO_PC28_IDX
+#define VFD_SCK  PIO_PB13_IDX
+#define VFD_MOSI PIO_PB1_IDX
 
 /* KSZ8051MNL relate PIN definition */
 #define PIN_KSZ8051MNL_RXC_IDX                PIO_PD14_IDX

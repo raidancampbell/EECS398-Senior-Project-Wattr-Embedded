@@ -168,17 +168,20 @@ void ade7753_calibrate_watt(void) {
 	
 	uint32_t active_energy = 0;
 	uint32_t apparant_energy = 0;
+	uint32_t reactive_energy = 0;
 	uint32_t period = 0;
 	
 	uint8_t active_energy_checksum = 0;
 	uint8_t apparant_energy_checksum = 0;
 	uint8_t period_checksum = 0;
+	uint8_t reactive_energy_checksum = 0;
 	
 	ade7753_read(ADE7753_REGISTER_LAENERGY,  &active_energy,   ADE7753_REGISTER_LAENERGY_BYTES,  &active_energy_checksum);
 	ade7753_read(ADE7753_REGISTER_LVAENERGY, &apparant_energy, ADE7753_REGISTER_LVAENERGY_BYTES, &apparant_energy_checksum);
+	ade7753_read(ADE7753_REGISTER_LVARENERGY, &reactive_energy, ADE7753_REGISTER_LVARENERGY_BYTES, &reactive_energy_checksum);
 	ade7753_read(ADE7753_REGISTER_PERIOD,    &period,          ADE7753_REGISTER_PERIOD_BYTES,    &period_checksum);
 	
-	printf("Active Energy: %d (%d); Apparant Energy: %d (%d); Period: %d (%d)\r\n", active_energy, active_energy_checksum, apparant_energy, apparant_energy_checksum, period, period_checksum);
+	printf("Active Energy: %d (%d); Apparant Energy: %d (%d); Reactive Energy: %d (%d); Period: %d (%d)\r\n", active_energy, active_energy_checksum, apparant_energy, apparant_energy_checksum, reactive_energy, reactive_energy_checksum, period, period_checksum);
 	
 }
 

@@ -90,6 +90,17 @@ void board_init(void)
 	ioport_set_pin_level(ADE7753_RST_GPIO, ADE7753_RST_ACTIVE_LEVEL);
 
 
+	ioport_set_pin_dir(VFD_NRST, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(VFD_NRST, true);
+
+	ioport_set_pin_dir(VFD_MOSI, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(VFD_MOSI, false);
+	
+
+	ioport_set_pin_dir(VFD_SCK, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(VFD_SCK, false);
+
+
 	ioport_set_pin_input_mode(ADE7753_ZX_GPIO, ADE7753_ZX_FLAGS, ADE7753_ZX_SENSE);
 	ioport_set_pin_input_mode(FP_BUTTON_LOAD_GPIO, FP_BUTTON_LOAD_FLAGS, FP_BUTTON_LOAD_SENSE);
 	ioport_set_pin_input_mode(FP_BUTTON_BACK_GPIO, FP_BUTTON_BACK_FLAGS, FP_BUTTON_BACK_SENSE);

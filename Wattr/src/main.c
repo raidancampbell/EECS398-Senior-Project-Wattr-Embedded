@@ -57,49 +57,82 @@ typedef struct ReadingPacket {
 	uint8_t		reserved;
 	uint16_t	flags;
 	
-	uint32_t epoch;
+	uint32_t	epoch;
 	
-	uint32_t voltage;				// ADE7753_REGISTER_VRMS
-	uint32_t current;				// ADE7753_REGISTER_IRMS
-	uint32_t period;				// ADE7753_REGISTER_PERIOD
-	 int32_t active_power;			// ADE7753_REGISTER_RAENERGY
-	 int32_t reactive_power;		// ADE7753_REGISTER_LVARENERGY
-	uint32_t apparent_power;		// ADE7753_REGISTER_LVAENERGY
-	uint32_t phase_angle;			// TODO: Calculation
-	uint32_t power_factor;			// TODO: Calculation
+	uint32_t	voltage;				// ADE7753_REGISTER_VRMS
+	uint32_t	current;				// ADE7753_REGISTER_IRMS
+	uint32_t	period;					// ADE7753_REGISTER_PERIOD
+	 int32_t	active_power;			// ADE7753_REGISTER_LAENERGY
+	 int32_t	reactive_power;			// ADE7753_REGISTER_LVARENERGY
+	uint32_t	apparent_power;			// ADE7753_REGISTER_LVAENERGY
+	uint32_t	phase_angle;			// TODO: Calculation
+	uint32_t	power_factor;			// TODO: Calculation
 	
-	uint8_t voltage_checksum;
-	uint8_t current_checksum;
-	uint8_t period_checksum;
-	uint8_t active_power_checksum;
+	uint8_t		voltage_checksum;
+	uint8_t		current_checksum;
+	uint8_t		period_checksum;
+	uint8_t		active_power_checksum;
 	
-	uint8_t reactive_power_checksum;
-	uint8_t apparent_power_checksum;
-	uint8_t phase_angle_checksum;
-	uint8_t power_factor_checksum;
+	uint8_t		reactive_power_checksum;
+	uint8_t		apparent_power_checksum;
+	uint8_t		phase_angle_checksum;
+	uint8_t		power_factor_checksum;
 	
 	uint32_t	checksum;
 	uint32_t	footer;
 } ReadingPacket;
 
-volatile int count = 0;
-volatile int cycle_count = 0;
+volatile int count = -1;
 
-volatile float32_t line_voltage = 3.14;
+
+void printDouble(float32_t v, uint8_t decimalDigits)
+{
+	uint8_t i = 1;
+	uint8_t intPart, fractPart;
+	for (;decimalDigits!=0; i*=10, decimalDigits--);
+	intPart = (uint8_t)v;
+	fractPart = (uint8_t)((v-(float32_t)(uint8_t)v)*i);
+	printf("%d.%d\r\n", intPart, fractPart);
+}
+/*
+char* float_to_string(float32_t number, uint8_t digits) {
+	char* value = '      ';
+	uint8_t index = 0;
+	
+	if (number < 0.0) {
+		value[index] = '-';
+		index++;
+		number = -number;
+	}
+	
+	if (number >= 100) {
+		value[index] = '1';
+		index++;
+	}
+	
+	
+	uint8_t integer_part = (uint8_t)number;
+	
+	
+}*/
+
 
 void spam_measurment(ReadingPacket *packet) {
-	line_voltage = (float32_t)(packet->voltage);
+	float32_t line_voltage = (float32_t)(packet->voltage);
 	line_voltage *= 0.000237748f;
 	
 	line_voltage -= 0.14427f;
 	
-	printf("\r\n");
+	printDouble(line_voltage, 3);
 	
-	//printf("%f\r\n", (uint32_t)line_voltage);
-	printf("%d,%d,%d,%d,%d,%d,%d,%d\r\n", count, cycle_count, (uint32_t)line_voltage/*packet->voltage*/, packet->current, packet->period, packet->active_power, packet->apparent_power, packet->reactive_power);
+	//printf("%d\r\n", (uint32_t)line_voltage);
+	
+	//printf("%f\r\n", line_voltage);
+	
+//	printf("%d,%e,%d,%d,%d,%d,%d\r\n", count, line_voltage/*packet->voltage*/, packet->current, packet->period, packet->active_power, packet->apparent_power, packet->reactive_power);
 }
 
-
+ReadingPacket *packet_ni;
 
 
 void ZX_Handler(uint32_t id, uint32_t mask) {	
@@ -117,23 +150,14 @@ void ZX_Handler(uint32_t id, uint32_t mask) {
 		ade7753_read(ADE7753_REGISTER_VRMS,   &(packet->voltage), ADE7753_REGISTER_VRMS_BYTES,    &(packet->voltage_checksum));
 		ade7753_read(ADE7753_REGISTER_IRMS,   &(packet->current), ADE7753_REGISTER_IRMS_BYTES,    &(packet->current_checksum));
 		ade7753_read(ADE7753_REGISTER_PERIOD, &(packet->period),  ADE7753_REGISTER_PERIOD_BYTES,  &(packet->period_checksum));
-		
-		if (cycle_count == 120) {
-			ade7753_read(ADE7753_REGISTER_LAENERGY,   &(packet->active_power),   ADE7753_REGISTER_LAENERGY_BYTES,    &(packet->active_power_checksum));
-			ade7753_read(ADE7753_REGISTER_LVAENERGY,  &(packet->apparent_power), ADE7753_REGISTER_LVAENERGY_BYTES,   &(packet->apparent_power_checksum));
-			ade7753_read(ADE7753_REGISTER_LVARENERGY, &(packet->reactive_power), ADE7753_REGISTER_LVARENERGY_BYTES,  &(packet->reactive_power_checksum));
-			
-			
-			cycle_count = 0;
-		} else {
-			cycle_count++;
-		}
-		
+	
 		spam_measurment(packet);
 		
 		if (count != -2) {
 			count--;
 		}
+		
+		//packet_ni = packet;
 		
 		free(packet);
 	}
@@ -145,7 +169,6 @@ void FP_ENCODER_Handler(uint32_t id, uint32_t mask) {
 	} else if (!ioport_get_pin_level(FP_ENCODER_Q1_GPIO) && ioport_get_pin_level(FP_ENCODER_Q2_GPIO)) {
 		printf("CW\r\n");
 	}
-
 }
 
 void FP_LOAD_Handler(uint32_t id, uint32_t mask) {	
@@ -154,18 +177,57 @@ void FP_LOAD_Handler(uint32_t id, uint32_t mask) {
 	ioport_toggle_pin_level(RELAY_2_GPIO);
 }
 
+
+
+
+void vfd_write(uint8_t data) {
+	uint8_t i = 1;
+	for (i = 0; i < 8; i++) {
+		ioport_set_pin_level(VFD_SCK, false);
+		delay_us(1);
+		if (data & (1 << i)) {
+			ioport_set_pin_level(VFD_MOSI, true);
+		} else {
+			ioport_set_pin_level(VFD_MOSI, false);
+		}
+		ioport_set_pin_level(VFD_SCK, true);
+		delay_us(1);
+	}
+	delay_us(17);
+}
+
+
+void vfd_write_string(char data[]) {
+	
+	int index = 0;
+	for (;;) {
+		if (data[index] == '\0') {
+			return;
+		} else {
+			vfd_write(data[index]);
+			index++;
+		}
+	}
+}
+
+/*
+void writePort(uint8_t data) {
+	while (CHECK(BUSY));
+	for (uint8_t i=1; i; i+=i) {
+		LOWER(SCK);
+		_delay_us(1);
+		if (data & i) RAISE(OUT); else LOWER(OUT);
+		RAISE(SCK);
+		_delay_us(1);
+	}
+	_delay_us(17);
+}*/
+
+
 int main (void) {
-	volatile uint32_t foo = 3;
+
 	
-	volatile float32_t bar = (float32_t)foo;
-	
-	bar += 3.0;
-	
-	
-	
-	
-	
-	
+	packet_ni = 0;
 	
 	sysclk_init();
 	board_init();
@@ -201,17 +263,31 @@ int main (void) {
 	ioport_set_pin_level(LED1_GPIO, false);
 	ioport_set_pin_level(LED2_GPIO, false);
 	ioport_set_pin_level(LED3_GPIO, false);
-	ioport_set_pin_level(FP_LED0_GPIO, true);
+	ioport_set_pin_level(FP_LED0_GPIO, false);
 	ioport_set_pin_level(FP_LED1_GPIO, false);
 	ioport_set_pin_level(FP_LED2_GPIO, false);
 	ioport_set_pin_level(FP_LED3_GPIO, true);
-	ioport_set_pin_level(RELAY_1_GPIO, true);
-	ioport_set_pin_level(RELAY_2_GPIO, true);
+	ioport_set_pin_level(RELAY_1_GPIO, false);
+	ioport_set_pin_level(RELAY_2_GPIO, false);
 	
 	/* Initialize the console uart */
 	configure_console();
 
 	spi_master_initialize();	
+	
+	ioport_set_pin_level(VFD_NRST, false);
+	delay_ms(1);
+	ioport_set_pin_level(VFD_NRST, true);
+	
+	delay_ms(500);
+	
+	vfd_write(0x1B);
+	vfd_write('@');
+	delay_ms(100);
+	
+	char stringdata[] = "Hello JTL!\0";
+	
+	vfd_write_string(stringdata);
 	
 	// We need to configure the ade7753...
 	// ...to have a current gain of 2...
@@ -221,7 +297,9 @@ int main (void) {
 	uint16_t line_cycles = 120;
 	ade7753_write(ADE7753_REGISTER_LINECYC, &line_cycles, ADE7753_REGISTER_LINECYC_BYTES);
 	
-
+	// Magic fucking numbers brah.	
+	uint8_t phase_offset = 14;
+	ade7753_write(ADE7753_REGISTER_PHCAL, &phase_offset, ADE7753_REGISTER_PHCAL_BYTES);
 	
 	puts(STRING_HEADER);
 		
@@ -229,13 +307,34 @@ int main (void) {
 	uint32_t cmd = 0x00;
 	uint8_t checksum = 0x00;
 	
-
-		printf("%d\r\n", (int)bar);
 	uint32_t samples[10] = {0,0,0,0,0,0,0,0,0,0};
 	uint8_t sample_checksum[10] = {0,0,0,0,0,0,0,0,0,0};
 		
 		int i = 0;
 		int j = 0;
+	
+	//count = -2;
+	
+	
+	//uint32_t foobar = 120;
+	
+	//float32_t barfoo = ((float32_t)foobar) * 0.51f;
+	
+//	float barfoo = 3.14f;
+	
+	//printf("%e\r\n", barfoo);
+	printf("Test\r\n");
+	
+	printDouble(3.14, 2);
+	
+	/*for (;;) {
+		if (packet_ni != 0) {
+			spam_measurment(packet_ni);
+			free(packet_ni);
+			packet_ni = 0;
+		}
+	}*/
+		
 	
 	for (;;) {
 		usart_serial_getchar(UART0, &input);
@@ -265,7 +364,7 @@ int main (void) {
 				ioport_toggle_pin_level(RELAY_2_GPIO);
 				break;
 			case 'd':
-				printf("Reading the DIEREV Register\r\n");
+			 	printf("Reading the DIEREV Register\r\n");
 				ade7753_read(0x3F, &cmd, 1, &checksum);
 				printf("Response 0x%x with a checksum of 0x%x %s \n\r", cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
 				break;
