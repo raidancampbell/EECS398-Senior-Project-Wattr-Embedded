@@ -142,7 +142,7 @@ typedef enum
   #include LUN_3_INCLUDE
 #endif
 #if LUN_4 == ENABLE
-  #include LUN_4_INCLUDE
+  #include <sd_mmc_mem.h>
 #endif
 #if LUN_5 == ENABLE
   #include LUN_5_INCLUDE

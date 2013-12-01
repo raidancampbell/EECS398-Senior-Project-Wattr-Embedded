@@ -82,7 +82,9 @@
 #define LUN_3                DISABLE  //!< Disable SD/MMC Card over MCI or MCI.
 #endif
 
-#if SD_MMC_ENABLE
+
+#define SD_MMC_ENABLE
+#ifdef SD_MMC_ENABLE
 #define LUN_4                ENABLE   //!< Enable common SD/MMC stack
 #define LUN_5                ENABLE
 #else

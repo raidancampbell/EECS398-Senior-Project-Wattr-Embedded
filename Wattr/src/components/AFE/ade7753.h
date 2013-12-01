@@ -5,7 +5,6 @@
  *  Author: Andrew
  */ 
 
-
 #ifndef ADE7753_H_
 #define ADE7753_H_
 
@@ -15,6 +14,27 @@
 #define SPI_DLYBS				  0x40
 #define SPI_DLYBCT				  0x10
 static uint32_t gs_ul_spi_clock = 500000;
+
+
+#define VRMS_SLOPE					(0.000237748f)
+#define VRMS_INTERCEPT				(-0.14427)
+
+#define IRMS_SLOPE					113240.82786f
+#define IRMS_INTERCEPT				953.97194f
+
+#define ACTIVE_POWER_SLOPE			0.016121f
+#define ACTIVE_POWER_INTERCEPT		7.0595f
+
+#define APPARENT_POWER_SLOPE		0.019658f
+#define APPARENT_POWER_INTERCEPT	11.7168f
+
+#define ACTIVE_ENERGY_SLOPE			0.000075018f
+#define ACTIVE_ENERGY_INTERCEPT		0.03266f
+
+#define POWER_FACTOR				0.827f
+
+#define CENTS_PER_KWH				0.13f
+
 
 // The number of bits the register is in bytes
 #define BITS6  1
@@ -180,21 +200,9 @@ void ade7753_read(uint8_t ic_register, uint32_t *data, uint8_t length, uint8_t *
 void ade7753_write(uint8_t ic_register, uint32_t *data, uint8_t length);
 uint8_t verify_result(uint32_t *result, uint8_t *checksum);
 
-
-//float32_t CFDN = 336;
-/*float32_t vNominal = 120f;
-float32_t vLowTest = 12f;
-float32_t iLowTest = .3f;
-float32_t iB = 7f;
-float32_t iMin = 0.015f;
-float32_t CLKIN = 357945;
-float32_t activeEng, activeEngIMin, apparentEng, wattGain, vaGAin, period, vrmsos, irmsos, phCal, pError, wattOffset, energyIMinExp, energyError;
-float32_t activeEngExp, apparentEngExp, vrms1, vrms2, irms1, irms2;*/
-
-
-
 void ade7753_calibrate_watt(void);
 void ade7753_calibrate_watt_offset(void);
 void ade7753_calibrate_phase(void);
+
 
 #endif /* ADE7753_H_ */

@@ -101,7 +101,12 @@ void board_init(void)
 	ioport_set_pin_level(VFD_SCK, false);
 
 
+	// PB3 = SD Power CTRL
+	ioport_set_pin_dir(PIO_PB3_IDX, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_level(PIO_PB3_IDX, false);
+
 	ioport_set_pin_input_mode(ADE7753_ZX_GPIO, ADE7753_ZX_FLAGS, ADE7753_ZX_SENSE);
+	ioport_set_pin_input_mode(ADE7753_IRQ_GPIO, ADE7753_IRQ_FLAGS, ADE7753_IRQ_SENSE);
 	ioport_set_pin_input_mode(FP_BUTTON_LOAD_GPIO, FP_BUTTON_LOAD_FLAGS, FP_BUTTON_LOAD_SENSE);
 	ioport_set_pin_input_mode(FP_BUTTON_BACK_GPIO, FP_BUTTON_BACK_FLAGS, FP_BUTTON_BACK_SENSE);
 	ioport_set_pin_input_mode(FP_BUTTON_SELECT_GPIO, FP_BUTTON_SELECT_FLAGS, FP_BUTTON_SELECT_SENSE);
@@ -116,7 +121,7 @@ void board_init(void)
 	
 	
 	
-	ioport_set_pin_input_mode(PIN_ADE7753_IRQ_GPIO, PIN_ADE7753_IRQ_FLAGS, PIN_ADE7753_IRQ_SENSE);
+	
 	
 	
 	
@@ -142,5 +147,17 @@ void board_init(void)
 	ioport_set_pin_dir(PHY_POWER_RST, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_level(PHY_POWER_RST, true);
 	
+
+
+	/* Configure HSMCI pins */
+	ioport_set_pin_peripheral_mode(PIN_HSMCI_MCCDA_GPIO, PIN_HSMCI_MCCDA_FLAGS);
+	ioport_set_pin_peripheral_mode(PIN_HSMCI_MCCK_GPIO, PIN_HSMCI_MCCK_FLAGS);
+	ioport_set_pin_peripheral_mode(PIN_HSMCI_MCDA0_GPIO, PIN_HSMCI_MCDA0_FLAGS);
+	ioport_set_pin_peripheral_mode(PIN_HSMCI_MCDA1_GPIO, PIN_HSMCI_MCDA1_FLAGS);
+	ioport_set_pin_peripheral_mode(PIN_HSMCI_MCDA2_GPIO, PIN_HSMCI_MCDA2_FLAGS);
+	ioport_set_pin_peripheral_mode(PIN_HSMCI_MCDA3_GPIO, PIN_HSMCI_MCDA3_FLAGS);
+
+	/* Configure SD/MMC card detect pin */
+	ioport_set_pin_peripheral_mode(SD_MMC_0_CD_GPIO, SD_MMC_0_CD_FLAGS);
 
 }

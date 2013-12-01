@@ -24,11 +24,13 @@
  * Include header files for all drivers that have been imported from
  * Atmel Software Framework (ASF).
  */
-#include <asf.h>
-#include <components/AFE/ade7753.h>
 
-#include <ASF/thirdparty/CMSIS/Include/arm_math.h>
 #define ARM_MATH_CM4
+
+#include <asf.h>
+#include <math.h>
+#include <ASF/thirdparty/CMSIS/Include/arm_math.h>
+#include <components/AFE/ade7753.h>
 
 #define STRING_EOL    "\r"
 #define STRING_HEADER "-- Wattr Hardware Revision 1--\r\n" \
@@ -52,6 +54,9 @@ static void configure_console(void) {
 /** IRQ priority for PIO (The lower the value, the greater the priority) */
 #define IRQ_PRIOR_PIO    0
 
+volatile int count = -1;
+
+
 typedef struct ReadingPacket {
 	uint8_t		header;
 	uint8_t		reserved;
@@ -62,8 +67,8 @@ typedef struct ReadingPacket {
 	uint32_t	voltage;				// ADE7753_REGISTER_VRMS
 	uint32_t	current;				// ADE7753_REGISTER_IRMS
 	uint32_t	period;					// ADE7753_REGISTER_PERIOD
-	 int32_t	active_power;			// ADE7753_REGISTER_LAENERGY
-	 int32_t	reactive_power;			// ADE7753_REGISTER_LVARENERGY
+	int32_t	active_power;			// ADE7753_REGISTER_LAENERGY
+	int32_t	reactive_power;			// ADE7753_REGISTER_LVARENERGY
 	uint32_t	apparent_power;			// ADE7753_REGISTER_LVAENERGY
 	uint32_t	phase_angle;			// TODO: Calculation
 	uint32_t	power_factor;			// TODO: Calculation
@@ -82,57 +87,141 @@ typedef struct ReadingPacket {
 	uint32_t	footer;
 } ReadingPacket;
 
-volatile int count = -1;
 
-
-void printDouble(float32_t v, uint8_t decimalDigits)
-{
+void float_to_string(char* output, float32_t v, uint8_t decimalDigits) {
 	uint8_t i = 1;
 	uint8_t intPart, fractPart;
 	for (;decimalDigits!=0; i*=10, decimalDigits--);
 	intPart = (uint8_t)v;
 	fractPart = (uint8_t)((v-(float32_t)(uint8_t)v)*i);
-	printf("%d.%d\r\n", intPart, fractPart);
+	sprintf(output, "%d.%d", intPart, fractPart);
 }
-/*
-char* float_to_string(float32_t number, uint8_t digits) {
-	char* value = '      ';
-	uint8_t index = 0;
-	
-	if (number < 0.0) {
-		value[index] = '-';
-		index++;
-		number = -number;
-	}
-	
-	if (number >= 100) {
-		value[index] = '1';
-		index++;
-	}
-	
-	
-	uint8_t integer_part = (uint8_t)number;
-	
-	
-}*/
 
 
-void spam_measurment(ReadingPacket *packet) {
+
+char* create_measurement_string(ReadingPacket *packet) {
+	// Line Voltage y=mx+b
 	float32_t line_voltage = (float32_t)(packet->voltage);
 	line_voltage *= 0.000237748f;
-	
 	line_voltage -= 0.14427f;
 	
-	printDouble(line_voltage, 3);
+	// Line Voltage float-to-string
+	char* line_voltage_string = malloc(6);
+	float_to_string(line_voltage_string, line_voltage, 3);
 	
-	//printf("%d\r\n", (uint32_t)line_voltage);
+	// Line Current y=mx+b
+	float32_t line_current = (float32_t)(packet->current);
+	line_current -= 953.97194f;
+	line_current /= 113240.82786f;
 	
-	//printf("%f\r\n", line_voltage);
+	// Line Current float-to-string
+	char* line_current_string = malloc(6);
+	float_to_string(line_current_string, line_current, 2);
 	
-//	printf("%d,%e,%d,%d,%d,%d,%d\r\n", count, line_voltage/*packet->voltage*/, packet->current, packet->period, packet->active_power, packet->apparent_power, packet->reactive_power);
+	// Line Active Power y=mx+b
+	uint32_t unsigned_active_power = (uint32_t)packet->active_power;
+	float32_t line_active_power = (float32_t)(unsigned_active_power);
+	line_active_power *= 0.016121f;
+	line_active_power -= 7.0595f;
+	
+	// Line Active Power float-to-string
+	char *line_active_power_string = malloc(6);
+	float_to_string(line_active_power_string, line_active_power, 1);
+	
+	// Line Apparent Power y=mx+b
+	float32_t line_apparent_power = (float32_t)(packet->apparent_power);
+	line_apparent_power *= 0.019658f;
+	line_apparent_power -= 11.7168f;
+	
+	// Line Apparent Power float-to-string
+	char* line_apparent_power_string = malloc(6);
+	float_to_string(line_apparent_power_string, line_apparent_power, 1);
+	
+	// Power Factor Calculation
+	float32_t line_power_factor;
+	line_power_factor = ((float32_t)((uint32_t)(packet->active_power)))/((float32_t)(packet->apparent_power));
+	line_power_factor *= 0.827f;
+	
+	// Power Factor float-to-string
+	char* line_power_factor_string = malloc(6);
+	float_to_string(line_power_factor_string, line_power_factor, 2);
+
+	// Phase Angle Calculation
+	float32_t line_phase_angle = acosf(line_power_factor);
+	char* line_phase_angle_string = malloc(6);
+	float_to_string(line_phase_angle_string, line_phase_angle, 4);
+	
+	// Reactive Power Calculation
+	float32_t line_reactive_power = tanf(line_phase_angle) * line_active_power;
+	char* line_reactive_power_string = malloc(6);
+	float_to_string(line_reactive_power_string, line_reactive_power, 4);
+	
+	// Line Frequency Calculation
+	float32_t line_frequency = (float32_t)(packet->period);
+	line_frequency *= 0.0000022f;
+	line_frequency = 1 / line_frequency;
+	
+	char* line_frequency_string = malloc(6);
+	float_to_string(line_frequency_string, line_frequency, 4);
+	
+	char* measurement = malloc(60);
+	sprintf(measurement, "%sV %sA %sHz %sW %sVA %sVAR PF:%s Angle:%s", line_voltage_string, line_current_string, line_frequency_string, line_active_power_string, line_apparent_power_string, line_reactive_power_string, line_power_factor_string, line_phase_angle_string);
+	
+	free(line_voltage_string);
+	free(line_current_string);
+	free(line_apparent_power_string);
+	free(line_active_power_string);
+	free(line_power_factor_string);
+	free(line_reactive_power_string);
+	free(line_phase_angle_string);
+	
+	return measurement;
 }
 
-ReadingPacket *packet_ni;
+int32_t fix_signed_24(int32_t number) {
+	int32_t fixed = (int32_t)number;
+	number = number << 8;
+	number /= 256;
+	
+	return number;
+}
+
+ReadingPacket* create_packet() {
+	ReadingPacket *packet = (ReadingPacket*)calloc(1, sizeof(ReadingPacket));
+	packet->header = 0x59;
+	packet->reserved = 0x0000;
+	packet->flags = ADE7753_FLAGS_NONE;
+	packet->footer = 0x5254464d;
+	
+	return packet;
+}
+
+inline void read_voltage(ReadingPacket *packet) {
+	ade7753_read(ADE7753_REGISTER_VRMS,   &(packet->voltage), ADE7753_REGISTER_VRMS_BYTES,    &(packet->voltage_checksum));
+}
+
+inline void read_current(ReadingPacket *packet) {
+	ade7753_read(ADE7753_REGISTER_IRMS,   &(packet->current), ADE7753_REGISTER_IRMS_BYTES,    &(packet->current_checksum));
+}
+
+inline void read_period(ReadingPacket *packet) {
+	ade7753_read(ADE7753_REGISTER_PERIOD, &(packet->period),  ADE7753_REGISTER_PERIOD_BYTES,  &(packet->period_checksum));
+}
+
+inline void read_active_power(ReadingPacket *packet) {
+	ade7753_read(ADE7753_REGISTER_LAENERGY,   &(packet->active_power),    ADE7753_REGISTER_LAENERGY_BYTES,  &(packet->active_power_checksum));
+	packet->active_power = fix_signed_24(packet->active_power);
+}
+
+inline void read_apparent_power(ReadingPacket *packet) {
+	ade7753_read(ADE7753_REGISTER_LVAENERGY,  &(packet->apparent_power), ADE7753_REGISTER_LVAENERGY_BYTES, &(packet->apparent_power_checksum));
+}
+
+inline void read_reactive_power(ReadingPacket *packet) {
+	ade7753_read(ADE7753_REGISTER_LVARENERGY, &(packet->reactive_power), ADE7753_REGISTER_LVARENERGY_BYTES, &(packet->reactive_power_checksum));
+	packet->reactive_power = fix_signed_24(packet->reactive_power);
+}
+
 
 
 void ZX_Handler(uint32_t id, uint32_t mask) {	
@@ -140,27 +229,45 @@ void ZX_Handler(uint32_t id, uint32_t mask) {
 	ioport_toggle_pin_level(FP_LED2_GPIO);
 	
 	if (count >= 0 || count == -2) {
-		ReadingPacket *packet = (ReadingPacket*)calloc(1, sizeof(ReadingPacket));
-		packet->header = 0x59;
-		packet->reserved = 0x0000;
-		packet->flags = ADE7753_FLAGS_NONE;
-		packet->footer = 0x5254464d;
+		ReadingPacket *packet = create_packet();
 		
+		read_voltage(packet);
+		read_current(packet);
+		read_period(packet);
+			
+		char* measurement = create_measurement_string(packet);
 		
-		ade7753_read(ADE7753_REGISTER_VRMS,   &(packet->voltage), ADE7753_REGISTER_VRMS_BYTES,    &(packet->voltage_checksum));
-		ade7753_read(ADE7753_REGISTER_IRMS,   &(packet->current), ADE7753_REGISTER_IRMS_BYTES,    &(packet->current_checksum));
-		ade7753_read(ADE7753_REGISTER_PERIOD, &(packet->period),  ADE7753_REGISTER_PERIOD_BYTES,  &(packet->period_checksum));
-	
-		spam_measurment(packet);
+		printf("%s\r\n", measurement);
 		
 		if (count != -2) {
 			count--;
 		}
-		
-		//packet_ni = packet;
-		
+
 		free(packet);
+		free(measurement);
 	}
+}
+
+void IRQ_Handler(uint32_t id, uint32_t mask) {
+	uint32_t interrupt_status = 0x00;
+	uint8_t interrupt_checksum = 0x00;
+	ade7753_read(ADE7753_REGISTER_RSTSTATUS, &interrupt_status, ADE7753_REGISTER_RSTSTATUS_BYTES, &interrupt_checksum);
+
+	ReadingPacket *packet = create_packet();
+	
+	read_voltage(packet);
+	read_current(packet);
+	read_period(packet);
+	
+	read_active_power(packet);
+	read_apparent_power(packet);
+	
+	char* measurement = create_measurement_string(packet);
+	
+	printf("%s\r\n", measurement);
+	
+	free(packet);
+	free(measurement);
 }
 
 void FP_ENCODER_Handler(uint32_t id, uint32_t mask) {
@@ -210,24 +317,13 @@ void vfd_write_string(char data[]) {
 	}
 }
 
-/*
-void writePort(uint8_t data) {
-	while (CHECK(BUSY));
-	for (uint8_t i=1; i; i+=i) {
-		LOWER(SCK);
-		_delay_us(1);
-		if (data & i) RAISE(OUT); else LOWER(OUT);
-		RAISE(SCK);
-		_delay_us(1);
-	}
-	_delay_us(17);
-}*/
-
 
 int main (void) {
 
 	
-	packet_ni = 0;
+	
+	irq_initialize_vectors();
+	cpu_irq_enable();
 	
 	sysclk_init();
 	board_init();
@@ -237,6 +333,12 @@ int main (void) {
 	NVIC_EnableIRQ((IRQn_Type)PIN_ADE7753_ZX_ID);
 	pio_handler_set_priority(PIN_ADE7753_ZX_PIO, (IRQn_Type)PIN_ADE7753_ZX_ID, IRQ_PRIOR_PIO);
 	pio_enable_interrupt(PIN_ADE7753_ZX_PIO, PIN_ADE7753_ZX_MASK);
+	
+		pmc_enable_periph_clk(PIN_ADE7753_IRQ_ID);
+		pio_handler_set(PIN_ADE7753_IRQ_PIO, PIN_ADE7753_IRQ_ID, PIN_ADE7753_IRQ_MASK, PIN_ADE7753_IRQ_ATTR, IRQ_Handler);
+		NVIC_EnableIRQ((IRQn_Type)PIN_ADE7753_IRQ_ID);
+		pio_handler_set_priority(PIN_ADE7753_IRQ_PIO, (IRQn_Type)PIN_ADE7753_IRQ_ID, IRQ_PRIOR_PIO);
+		pio_enable_interrupt(PIN_ADE7753_IRQ_PIO, PIN_ADE7753_IRQ_MASK);
 	
 	pmc_enable_periph_clk(PIN_FP_BUTTON_LOAD_ID);
 	pio_handler_set(PIN_FP_BUTTON_LOAD_PIO, PIN_FP_BUTTON_LOAD_ID, PIN_FP_BUTTON_LOAD_MASK, PIN_FP_BUTTON_LOAD_ATTR, FP_LOAD_Handler);
@@ -293,10 +395,16 @@ int main (void) {
 	// ...to have a current gain of 2...
 	uint8_t  gain		 = ADE7753_GAIN_PGA1_2;
 	ade7753_write(ADE7753_REGISTER_GAIN, &gain, ADE7753_REGISTER_GAIN_BYTES);
-	// ...and to measure energy for 120 half line cycles (e.g. 60 cycles or 1 second(ish))
-	uint16_t line_cycles = 120;
-	ade7753_write(ADE7753_REGISTER_LINECYC, &line_cycles, ADE7753_REGISTER_LINECYC_BYTES);
-	
+uint32_t linecyc_int = 2000;
+ade7753_write(ADE7753_REGISTER_LINECYC, &linecyc_int, ADE7753_REGISTER_LINECYC_BYTES);
+
+uint32_t mode_register = 0x0080;
+ade7753_write(ADE7753_REGISTER_MODE, &mode_register, ADE7753_REGISTER_MODE_BYTES);
+
+uint32_t irqen_register = 0x04;
+ade7753_write(ADE7753_REGISTER_IRQEN, &irqen_register, ADE7753_REGISTER_IRQEN_BYTES);
+
+
 	// Magic fucking numbers brah.	
 	uint8_t phase_offset = 14;
 	ade7753_write(ADE7753_REGISTER_PHCAL, &phase_offset, ADE7753_REGISTER_PHCAL_BYTES);
@@ -312,28 +420,9 @@ int main (void) {
 		
 		int i = 0;
 		int j = 0;
-	
-	//count = -2;
-	
-	
-	//uint32_t foobar = 120;
-	
-	//float32_t barfoo = ((float32_t)foobar) * 0.51f;
-	
-//	float barfoo = 3.14f;
-	
-	//printf("%e\r\n", barfoo);
-	printf("Test\r\n");
-	
-	printDouble(3.14, 2);
-	
-	/*for (;;) {
-		if (packet_ni != 0) {
-			spam_measurment(packet_ni);
-			free(packet_ni);
-			packet_ni = 0;
-		}
-	}*/
+
+
+	sd_mmc_init();
 		
 	
 	for (;;) {

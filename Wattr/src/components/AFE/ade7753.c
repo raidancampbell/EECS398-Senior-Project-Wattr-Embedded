@@ -148,7 +148,7 @@ void ade7753_calibrate_watt(void) {
 	
 	for (;;) {
 		printf("%d\r\n", count++);
-		if (!ioport_get_pin_level(PIN_ADE7753_IRQ_GPIO)) {
+		if (!ioport_get_pin_level(ADE7753_IRQ_GPIO)) {
 			break;
 		}
 	}
@@ -161,7 +161,7 @@ void ade7753_calibrate_watt(void) {
 	
 	for (;;) {
 		printf("%d\r\n", count++);
-		if (!ioport_get_pin_level(PIN_ADE7753_IRQ_GPIO)) {
+		if (!ioport_get_pin_level(ADE7753_IRQ_GPIO)) {
 			break;
 		}
 	}
@@ -213,7 +213,7 @@ void ade7753_calibrate_watt_offset(void) {
 	
 	for (;;) {
 		printf("%d\r\n", count++);
-		if (!ioport_get_pin_level(PIN_ADE7753_IRQ_GPIO)) {
+		if (!ioport_get_pin_level(ADE7753_IRQ_GPIO)) {
 			break;
 		}
 	}
@@ -227,7 +227,7 @@ void ade7753_calibrate_watt_offset(void) {
 		
 	for (;;) {
 		printf("%d\r\n", count++);
-		if (!ioport_get_pin_level(PIN_ADE7753_IRQ_GPIO)) {
+		if (!ioport_get_pin_level(ADE7753_IRQ_GPIO)) {
 			break;
 		}
 	}
@@ -267,7 +267,7 @@ void ade7753_calibrate_phase(void) {
 	
 	for (;;) {
 		printf("%d\r\n", count++);
-		if (!ioport_get_pin_level(PIN_ADE7753_IRQ_GPIO)) {
+		if (!ioport_get_pin_level(ADE7753_IRQ_GPIO)) {
 			break;
 		}
 	}
@@ -280,7 +280,7 @@ void ade7753_calibrate_phase(void) {
 	
 	for (;;) {
 		printf("%d\r\n", count++);
-		if (!ioport_get_pin_level(PIN_ADE7753_IRQ_GPIO)) {
+		if (!ioport_get_pin_level(ADE7753_IRQ_GPIO)) {
 			break;
 		}
 	}
