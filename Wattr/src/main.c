@@ -31,6 +31,10 @@
 #include <math.h>
 #include <ASF/thirdparty/CMSIS/Include/arm_math.h>
 #include <components/AFE/ade7753.h>
+#include "stdio_serial.h"
+#include "conf_clock.h"
+#include "conf_board.h"
+
 
 #define STRING_EOL    "\r"
 #define STRING_HEADER "-- Wattr Hardware Revision 1--\r\n" \
@@ -54,7 +58,14 @@ static void configure_console(void) {
 /** IRQ priority for PIO (The lower the value, the greater the priority) */
 #define IRQ_PRIOR_PIO    0
 
-volatile int count = -1;
+volatile int32_t count = -1;
+volatile uint32_t zx_count = 0;
+volatile int32_t epoch = 1385917633;
+
+#define VOLTAGE_UNDERVOLT = 114.0f
+#define VOLTAGE_OVERVOLT  = 126.0f
+
+
 
 
 typedef struct ReadingPacket {
@@ -223,11 +234,10 @@ inline void read_reactive_power(ReadingPacket *packet) {
 }
 
 
-
 void ZX_Handler(uint32_t id, uint32_t mask) {	
 	ioport_toggle_pin_level(LED1_GPIO);
 	ioport_toggle_pin_level(FP_LED2_GPIO);
-	
+
 	if (count >= 0 || count == -2) {
 		ReadingPacket *packet = create_packet();
 		
@@ -305,6 +315,8 @@ void vfd_write(uint8_t data) {
 
 
 void vfd_write_string(char data[]) {
+	printf("%s", data);
+	
 	
 	int index = 0;
 	for (;;) {
@@ -317,28 +329,27 @@ void vfd_write_string(char data[]) {
 	}
 }
 
-
 int main (void) {
 
 	
 	
-	irq_initialize_vectors();
-	cpu_irq_enable();
-	
+
 	sysclk_init();
 	board_init();
+
 		
+		/*
 	pmc_enable_periph_clk(PIN_ADE7753_ZX_ID);
 	pio_handler_set(PIN_ADE7753_ZX_PIO, PIN_ADE7753_ZX_ID, PIN_ADE7753_ZX_MASK, PIN_ADE7753_ZX_ATTR, ZX_Handler);
 	NVIC_EnableIRQ((IRQn_Type)PIN_ADE7753_ZX_ID);
 	pio_handler_set_priority(PIN_ADE7753_ZX_PIO, (IRQn_Type)PIN_ADE7753_ZX_ID, IRQ_PRIOR_PIO);
 	pio_enable_interrupt(PIN_ADE7753_ZX_PIO, PIN_ADE7753_ZX_MASK);
 	
-		pmc_enable_periph_clk(PIN_ADE7753_IRQ_ID);
-		pio_handler_set(PIN_ADE7753_IRQ_PIO, PIN_ADE7753_IRQ_ID, PIN_ADE7753_IRQ_MASK, PIN_ADE7753_IRQ_ATTR, IRQ_Handler);
-		NVIC_EnableIRQ((IRQn_Type)PIN_ADE7753_IRQ_ID);
-		pio_handler_set_priority(PIN_ADE7753_IRQ_PIO, (IRQn_Type)PIN_ADE7753_IRQ_ID, IRQ_PRIOR_PIO);
-		pio_enable_interrupt(PIN_ADE7753_IRQ_PIO, PIN_ADE7753_IRQ_MASK);
+	pmc_enable_periph_clk(PIN_ADE7753_IRQ_ID);
+	pio_handler_set(PIN_ADE7753_IRQ_PIO, PIN_ADE7753_IRQ_ID, PIN_ADE7753_IRQ_MASK, PIN_ADE7753_IRQ_ATTR, IRQ_Handler);
+	NVIC_EnableIRQ((IRQn_Type)PIN_ADE7753_IRQ_ID);
+	pio_handler_set_priority(PIN_ADE7753_IRQ_PIO, (IRQn_Type)PIN_ADE7753_IRQ_ID, IRQ_PRIOR_PIO);
+	pio_enable_interrupt(PIN_ADE7753_IRQ_PIO, PIN_ADE7753_IRQ_MASK);
 	
 	pmc_enable_periph_clk(PIN_FP_BUTTON_LOAD_ID);
 	pio_handler_set(PIN_FP_BUTTON_LOAD_PIO, PIN_FP_BUTTON_LOAD_ID, PIN_FP_BUTTON_LOAD_MASK, PIN_FP_BUTTON_LOAD_ATTR, FP_LOAD_Handler);
@@ -357,11 +368,7 @@ int main (void) {
 	NVIC_EnableIRQ((IRQn_Type)PIN_FP_ENCODER_Q2_ID);
 	pio_handler_set_priority(PIN_FP_ENCODER_Q2_PIO, (IRQn_Type)PIN_FP_ENCODER_Q2_ID, IRQ_PRIOR_PIO);
 	pio_enable_interrupt(PIN_FP_ENCODER_Q2_PIO, PIN_FP_ENCODER_Q2_MASK);
-	
-	
-	
-	
-				
+		*/
 	ioport_set_pin_level(LED1_GPIO, false);
 	ioport_set_pin_level(LED2_GPIO, false);
 	ioport_set_pin_level(LED3_GPIO, false);
@@ -391,6 +398,8 @@ int main (void) {
 	
 	vfd_write_string(stringdata);
 	
+	for(;;) {}
+	/*
 	// We need to configure the ade7753...
 	// ...to have a current gain of 2...
 	uint8_t  gain		 = ADE7753_GAIN_PGA1_2;
@@ -423,8 +432,6 @@ ade7753_write(ADE7753_REGISTER_IRQEN, &irqen_register, ADE7753_REGISTER_IRQEN_BY
 
 
 	sd_mmc_init();
-		
-	
 	for (;;) {
 		usart_serial_getchar(UART0, &input);
 		usart_serial_putchar(UART0, input);
@@ -506,5 +513,5 @@ ade7753_write(ADE7753_REGISTER_IRQEN, &irqen_register, ADE7753_REGISTER_IRQEN_BY
 				ade7753_calibrate_phase();
 				break;
 		}
-	}
+	}*/
 }
