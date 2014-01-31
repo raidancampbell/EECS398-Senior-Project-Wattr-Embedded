@@ -31,6 +31,7 @@
 #include <math.h>
 #include <ASF/thirdparty/CMSIS/Include/arm_math.h>
 #include <components/AFE/ade7753.h>
+#include <components/vfd.h>
 #include "stdio_serial.h"
 #include "conf_clock.h"
 #include "conf_board.h"
@@ -58,134 +59,110 @@ static void configure_console(void) {
 /** IRQ priority for PIO (The lower the value, the greater the priority) */
 #define IRQ_PRIOR_PIO    0
 
-volatile int32_t count = -1;
+
+#define MENU_STATE_SPLASH  0
+#define MENU_STATE_VAFAAR  1
+#define MENU_STATE_TRIG    2
+#define MENU_STATE_COST    3
+#define MENU_STATE_CONFIG  4
+
+volatile uint8_t menu_state = MENU_STATE_SPLASH; 
+
+volatile int32_t  count = -1;
 volatile uint32_t zx_count = 0;
-volatile int32_t epoch = 1385917633;
+volatile int32_t  epoch = 1385917633;
 
-#define VOLTAGE_UNDERVOLT = 114.0f
-#define VOLTAGE_OVERVOLT  = 126.0f
+volatile uint32_t global_voltage = 0;
+volatile uint32_t global_current = 0;
+volatile uint32_t global_period = 0;
+volatile int32_t  global_active_power = 0;
+volatile uint32_t global_apparent_power = 0;
+volatile uint8_t  global_bullshit_checksum = 0;
 
+volatile int32_t global_watt_hours_epoch = 0;
+volatile float32_t global_watt_hours = 0.0f;
 
+volatile char* global_voltage_string;
+volatile char* global_current_string;
+volatile char* global_frequency_string;
+volatile char* global_active_power_string;
+volatile char* global_apparent_power_string;
+volatile char* global_reactive_power_string;
+volatile char* global_power_factor_string;
+volatile char* global_phase_angle_string;
 
-
-typedef struct ReadingPacket {
-	uint8_t		header;
-	uint8_t		reserved;
-	uint16_t	flags;
-	
-	uint32_t	epoch;
-	
-	uint32_t	voltage;				// ADE7753_REGISTER_VRMS
-	uint32_t	current;				// ADE7753_REGISTER_IRMS
-	uint32_t	period;					// ADE7753_REGISTER_PERIOD
-	int32_t	active_power;			// ADE7753_REGISTER_LAENERGY
-	int32_t	reactive_power;			// ADE7753_REGISTER_LVARENERGY
-	uint32_t	apparent_power;			// ADE7753_REGISTER_LVAENERGY
-	uint32_t	phase_angle;			// TODO: Calculation
-	uint32_t	power_factor;			// TODO: Calculation
-	
-	uint8_t		voltage_checksum;
-	uint8_t		current_checksum;
-	uint8_t		period_checksum;
-	uint8_t		active_power_checksum;
-	
-	uint8_t		reactive_power_checksum;
-	uint8_t		apparent_power_checksum;
-	uint8_t		phase_angle_checksum;
-	uint8_t		power_factor_checksum;
-	
-	uint32_t	checksum;
-	uint32_t	footer;
-} ReadingPacket;
-
-
-void float_to_string(char* output, float32_t v, uint8_t decimalDigits) {
-	uint8_t i = 1;
-	uint8_t intPart, fractPart;
-	for (;decimalDigits!=0; i*=10, decimalDigits--);
-	intPart = (uint8_t)v;
-	fractPart = (uint8_t)((v-(float32_t)(uint8_t)v)*i);
-	sprintf(output, "%d.%d", intPart, fractPart);
-}
-
-
-
-char* create_measurement_string(ReadingPacket *packet) {
+char* create_measurement_string() {
 	// Line Voltage y=mx+b
-	float32_t line_voltage = (float32_t)(packet->voltage);
+	float32_t line_voltage = (float32_t)(global_voltage);
 	line_voltage *= 0.000237748f;
 	line_voltage -= 0.14427f;
+	global_voltage_string = gcvtf(line_voltage, 5, global_voltage_string);
 	
-	// Line Voltage float-to-string
-	char* line_voltage_string = malloc(6);
-	float_to_string(line_voltage_string, line_voltage, 3);
+	if (line_voltage >= 126.0f) {
+		ioport_set_pin_level(FP_LED1_GPIO, true);
+	} else if (line_voltage <= 114.0f) {
+		ioport_set_pin_level(FP_LED1_GPIO, true);
+	} else {
+		ioport_set_pin_level(FP_LED1_GPIO, false);
+	}
 	
 	// Line Current y=mx+b
-	float32_t line_current = (float32_t)(packet->current);
+	float32_t line_current = (float32_t)(global_current);
 	line_current -= 953.97194f;
 	line_current /= 113240.82786f;
-	
-	// Line Current float-to-string
-	char* line_current_string = malloc(6);
-	float_to_string(line_current_string, line_current, 2);
+	global_current_string = gcvtf(line_current, 3, global_current_string);
 	
 	// Line Active Power y=mx+b
-	uint32_t unsigned_active_power = (uint32_t)packet->active_power;
+	uint32_t unsigned_active_power = (uint32_t)global_active_power;
 	float32_t line_active_power = (float32_t)(unsigned_active_power);
 	line_active_power *= 0.016121f;
 	line_active_power -= 7.0595f;
+	line_active_power += 6.8f;
+	line_active_power += 0.24f;
+	global_active_power_string = gcvtf(line_active_power, 3, global_active_power_string);
 	
-	// Line Active Power float-to-string
-	char *line_active_power_string = malloc(6);
-	float_to_string(line_active_power_string, line_active_power, 1);
+	float32_t line_active_power_watt_hour = (float32_t)(unsigned_active_power);
+	line_active_power_watt_hour *= .000075018f;
+	line_active_power_watt_hour -= .03266f;
+	
+	global_watt_hours += line_active_power_watt_hour;
 	
 	// Line Apparent Power y=mx+b
-	float32_t line_apparent_power = (float32_t)(packet->apparent_power);
+	float32_t line_apparent_power = (float32_t)(global_apparent_power);
 	line_apparent_power *= 0.019658f;
 	line_apparent_power -= 11.7168f;
-	
-	// Line Apparent Power float-to-string
-	char* line_apparent_power_string = malloc(6);
-	float_to_string(line_apparent_power_string, line_apparent_power, 1);
-	
+	line_apparent_power += 9.8f;
+	line_apparent_power += 0.52f;
+	global_apparent_power_string = gcvtf(line_apparent_power, 3, global_apparent_power_string);
+
 	// Power Factor Calculation
 	float32_t line_power_factor;
-	line_power_factor = ((float32_t)((uint32_t)(packet->active_power)))/((float32_t)(packet->apparent_power));
+	line_power_factor = ((float32_t)((uint32_t)(global_active_power)))/((float32_t)(global_apparent_power));
 	line_power_factor *= 0.827f;
+	global_power_factor_string = gcvtf(line_power_factor, 3, global_power_factor_string);
 	
-	// Power Factor float-to-string
-	char* line_power_factor_string = malloc(6);
-	float_to_string(line_power_factor_string, line_power_factor, 2);
-
 	// Phase Angle Calculation
 	float32_t line_phase_angle = acosf(line_power_factor);
-	char* line_phase_angle_string = malloc(6);
-	float_to_string(line_phase_angle_string, line_phase_angle, 4);
+	float32_t line_phase_angle_radian = line_phase_angle * 57.29f; // radians to degrees
+	global_phase_angle_string = gcvtf(line_phase_angle_radian, 3, global_phase_angle_string);
 	
 	// Reactive Power Calculation
 	float32_t line_reactive_power = tanf(line_phase_angle) * line_active_power;
-	char* line_reactive_power_string = malloc(6);
-	float_to_string(line_reactive_power_string, line_reactive_power, 4);
+	global_reactive_power_string = gcvtf(line_reactive_power, 2, global_reactive_power_string);
 	
 	// Line Frequency Calculation
-	float32_t line_frequency = (float32_t)(packet->period);
+	float32_t line_frequency = (float32_t)(global_period);
+	line_frequency += 110.0f;
 	line_frequency *= 0.0000022f;
 	line_frequency = 1 / line_frequency;
 	
-	char* line_frequency_string = malloc(6);
-	float_to_string(line_frequency_string, line_frequency, 4);
+	//char* line_frequency_string = malloc(32);
+	//line_frequency_string = gcvtf(line_frequency, 5, line_frequency_string);
+	global_frequency_string = gcvtf(line_frequency, 3, global_frequency_string);
 	
-	char* measurement = malloc(60);
-	sprintf(measurement, "%sV %sA %sHz %sW %sVA %sVAR PF:%s Angle:%s", line_voltage_string, line_current_string, line_frequency_string, line_active_power_string, line_apparent_power_string, line_reactive_power_string, line_power_factor_string, line_phase_angle_string);
-	
-	free(line_voltage_string);
-	free(line_current_string);
-	free(line_apparent_power_string);
-	free(line_active_power_string);
-	free(line_power_factor_string);
-	free(line_reactive_power_string);
-	free(line_phase_angle_string);
-	
+	char* measurement = malloc(128);
+	sprintf(measurement, "%d,%u,0,%s,%s,%s,%s,%s,%s,%s,%s", epoch, zx_count, global_voltage_string, global_current_string, global_frequency_string, global_active_power_string, global_apparent_power_string, global_reactive_power_string, global_power_factor_string, global_phase_angle_string);
+
 	return measurement;
 }
 
@@ -197,65 +174,52 @@ int32_t fix_signed_24(int32_t number) {
 	return number;
 }
 
-ReadingPacket* create_packet() {
-	ReadingPacket *packet = (ReadingPacket*)calloc(1, sizeof(ReadingPacket));
-	packet->header = 0x59;
-	packet->reserved = 0x0000;
-	packet->flags = ADE7753_FLAGS_NONE;
-	packet->footer = 0x5254464d;
-	
-	return packet;
+inline void read_voltage() {
+	ade7753_read(ADE7753_REGISTER_VRMS,   &global_voltage, ADE7753_REGISTER_VRMS_BYTES,    &global_bullshit_checksum);
 }
 
-inline void read_voltage(ReadingPacket *packet) {
-	ade7753_read(ADE7753_REGISTER_VRMS,   &(packet->voltage), ADE7753_REGISTER_VRMS_BYTES,    &(packet->voltage_checksum));
+inline void read_current() {
+	ade7753_read(ADE7753_REGISTER_IRMS,   &global_current, ADE7753_REGISTER_IRMS_BYTES,    &global_bullshit_checksum);
 }
 
-inline void read_current(ReadingPacket *packet) {
-	ade7753_read(ADE7753_REGISTER_IRMS,   &(packet->current), ADE7753_REGISTER_IRMS_BYTES,    &(packet->current_checksum));
+inline void read_period() {
+	ade7753_read(ADE7753_REGISTER_PERIOD, &global_period,  ADE7753_REGISTER_PERIOD_BYTES,  &global_bullshit_checksum);
 }
 
-inline void read_period(ReadingPacket *packet) {
-	ade7753_read(ADE7753_REGISTER_PERIOD, &(packet->period),  ADE7753_REGISTER_PERIOD_BYTES,  &(packet->period_checksum));
+inline void read_active_power() {
+	uint8_t checksum = 0;
+	ade7753_read(ADE7753_REGISTER_LAENERGY, &global_active_power,    ADE7753_REGISTER_LAENERGY_BYTES,  &checksum);
+
+	global_active_power = fix_signed_24(global_active_power);
+	global_active_power	*= 10;
 }
 
-inline void read_active_power(ReadingPacket *packet) {
-	ade7753_read(ADE7753_REGISTER_LAENERGY,   &(packet->active_power),    ADE7753_REGISTER_LAENERGY_BYTES,  &(packet->active_power_checksum));
-	packet->active_power = fix_signed_24(packet->active_power);
+inline void read_apparent_power() {
+	uint8_t checksum = 0;
+	ade7753_read(ADE7753_REGISTER_LVAENERGY,   &global_apparent_power,    ADE7753_REGISTER_LVAENERGY_BYTES,  &checksum);
+	global_apparent_power *= 10;
 }
-
-inline void read_apparent_power(ReadingPacket *packet) {
-	ade7753_read(ADE7753_REGISTER_LVAENERGY,  &(packet->apparent_power), ADE7753_REGISTER_LVAENERGY_BYTES, &(packet->apparent_power_checksum));
-}
-
-inline void read_reactive_power(ReadingPacket *packet) {
-	ade7753_read(ADE7753_REGISTER_LVARENERGY, &(packet->reactive_power), ADE7753_REGISTER_LVARENERGY_BYTES, &(packet->reactive_power_checksum));
-	packet->reactive_power = fix_signed_24(packet->reactive_power);
-}
-
 
 void ZX_Handler(uint32_t id, uint32_t mask) {	
 	ioport_toggle_pin_level(LED1_GPIO);
 	ioport_toggle_pin_level(FP_LED2_GPIO);
 
-	if (count >= 0 || count == -2) {
-		ReadingPacket *packet = create_packet();
-		
-		read_voltage(packet);
-		read_current(packet);
-		read_period(packet);
-			
-		char* measurement = create_measurement_string(packet);
-		
-		printf("%s\r\n", measurement);
-		
-		if (count != -2) {
-			count--;
-		}
-
-		free(packet);
-		free(measurement);
+	if (zx_count == 60) {
+		zx_count = 0;
+		epoch++;
 	}
+		
+	zx_count++;		
+		
+	read_voltage();
+	read_current();
+	read_period();
+		
+	char* measurement = create_measurement_string();
+
+	printf("%s\r\n", measurement);
+
+	free(measurement);
 }
 
 void IRQ_Handler(uint32_t id, uint32_t mask) {
@@ -263,29 +227,51 @@ void IRQ_Handler(uint32_t id, uint32_t mask) {
 	uint8_t interrupt_checksum = 0x00;
 	ade7753_read(ADE7753_REGISTER_RSTSTATUS, &interrupt_status, ADE7753_REGISTER_RSTSTATUS_BYTES, &interrupt_checksum);
 
-	ReadingPacket *packet = create_packet();
+	read_active_power();
+	read_apparent_power();
 	
-	read_voltage(packet);
-	read_current(packet);
-	read_period(packet);
+	uint32_t global_active_power_test = (uint32_t)global_active_power;
+	uint32_t unsigned_active_power = (uint32_t)global_active_power_test;
+	float32_t line_active_power_watt_hour = (float32_t)(unsigned_active_power);
+	line_active_power_watt_hour *= .000075018f;
+	line_active_power_watt_hour -= .03266f;
 	
-	read_active_power(packet);
-	read_apparent_power(packet);
-	
-	char* measurement = create_measurement_string(packet);
-	
-	printf("%s\r\n", measurement);
-	
-	free(packet);
-	free(measurement);
+	if (line_active_power_watt_hour >= 0) {
+		global_watt_hours += line_active_power_watt_hour;
+	}
 }
+
+
+uint32_t changed = false;
+
+void FP_DOWN_Handler(uint32_t id, uint32_t mask) {
+	if (menu_state != MENU_STATE_CONFIG) {
+		menu_state++;
+		changed = true;
+	}
+}
+
+void FP_UP_Handler(uint32_t id, uint32_t mask) {
+	if (menu_state != MENU_STATE_SPLASH) {
+		menu_state--;
+		changed = true;
+	}
+}
+
 
 void FP_ENCODER_Handler(uint32_t id, uint32_t mask) {
 	if (ioport_get_pin_level(FP_ENCODER_Q1_GPIO) && !ioport_get_pin_level(FP_ENCODER_Q2_GPIO)) {
-		printf("CCW\r\n");
+		//printf("CCW\r\n");
+		FP_UP_Handler(0,0);
 	} else if (!ioport_get_pin_level(FP_ENCODER_Q1_GPIO) && ioport_get_pin_level(FP_ENCODER_Q2_GPIO)) {
-		printf("CW\r\n");
+		//printf("CW\r\n");
+		FP_DOWN_Handler(0,0);
 	}
+}
+
+void FP_BACK_Handler(uint32_t id, uint32_t mask) {	
+	global_watt_hours_epoch = epoch;
+	global_watt_hours = 0.0f;
 }
 
 void FP_LOAD_Handler(uint32_t id, uint32_t mask) {	
@@ -294,51 +280,20 @@ void FP_LOAD_Handler(uint32_t id, uint32_t mask) {
 	ioport_toggle_pin_level(RELAY_2_GPIO);
 }
 
-
-
-
-void vfd_write(uint8_t data) {
-	uint8_t i = 1;
-	for (i = 0; i < 8; i++) {
-		ioport_set_pin_level(VFD_SCK, false);
-		delay_us(1);
-		if (data & (1 << i)) {
-			ioport_set_pin_level(VFD_MOSI, true);
-		} else {
-			ioport_set_pin_level(VFD_MOSI, false);
-		}
-		ioport_set_pin_level(VFD_SCK, true);
-		delay_us(1);
-	}
-	delay_us(17);
-}
-
-
-void vfd_write_string(char data[]) {
-	printf("%s", data);
-	
-	
-	int index = 0;
-	for (;;) {
-		if (data[index] == '\0') {
-			return;
-		} else {
-			vfd_write(data[index]);
-			index++;
-		}
-	}
-}
-
 int main (void) {
-
+	global_watt_hours_epoch = epoch;
+	global_voltage_string = malloc(32);
+	global_current_string = malloc(32);
+	global_frequency_string = malloc(32);
+	global_active_power_string = malloc(32);
+	global_apparent_power_string = malloc(32);
+	global_reactive_power_string = malloc(32);
+	global_power_factor_string = malloc(32);
+	global_phase_angle_string = malloc(32);
 	
-	
-
 	sysclk_init();
 	board_init();
 
-		
-		/*
 	pmc_enable_periph_clk(PIN_ADE7753_ZX_ID);
 	pio_handler_set(PIN_ADE7753_ZX_PIO, PIN_ADE7753_ZX_ID, PIN_ADE7753_ZX_MASK, PIN_ADE7753_ZX_ATTR, ZX_Handler);
 	NVIC_EnableIRQ((IRQn_Type)PIN_ADE7753_ZX_ID);
@@ -357,6 +312,24 @@ int main (void) {
 	pio_handler_set_priority(PIN_FP_BUTTON_LOAD_PIO, (IRQn_Type)PIN_FP_BUTTON_LOAD_ID, IRQ_PRIOR_PIO);
 	pio_enable_interrupt(PIN_FP_BUTTON_LOAD_PIO, PIN_FP_BUTTON_LOAD_MASK);
 	
+	pmc_enable_periph_clk(PIN_FP_BUTTON_UP_ID);
+	pio_handler_set(PIN_FP_BUTTON_UP_PIO, PIN_FP_BUTTON_UP_ID, PIN_FP_BUTTON_UP_MASK, PIN_FP_BUTTON_UP_ATTR, FP_UP_Handler);
+	NVIC_EnableIRQ((IRQn_Type)PIN_FP_BUTTON_UP_ID);
+	pio_handler_set_priority(PIN_FP_BUTTON_UP_PIO, (IRQn_Type)PIN_FP_BUTTON_UP_ID, IRQ_PRIOR_PIO);
+	pio_enable_interrupt(PIN_FP_BUTTON_UP_PIO, PIN_FP_BUTTON_UP_MASK);
+	
+	pmc_enable_periph_clk(PIN_FP_BUTTON_DOWN_ID);
+	pio_handler_set(PIN_FP_BUTTON_DOWN_PIO, PIN_FP_BUTTON_DOWN_ID, PIN_FP_BUTTON_DOWN_MASK, PIN_FP_BUTTON_DOWN_ATTR, FP_DOWN_Handler);
+	NVIC_EnableIRQ((IRQn_Type)PIN_FP_BUTTON_DOWN_ID);
+	pio_handler_set_priority(PIN_FP_BUTTON_DOWN_PIO, (IRQn_Type)PIN_FP_BUTTON_DOWN_ID, IRQ_PRIOR_PIO);
+	pio_enable_interrupt(PIN_FP_BUTTON_DOWN_PIO, PIN_FP_BUTTON_DOWN_MASK);
+	
+	pmc_enable_periph_clk(PIN_FP_BUTTON_BACK_ID);
+	pio_handler_set(PIN_FP_BUTTON_BACK_PIO, PIN_FP_BUTTON_BACK_ID, PIN_FP_BUTTON_BACK_MASK, PIN_FP_BUTTON_BACK_ATTR, FP_BACK_Handler);
+	NVIC_EnableIRQ((IRQn_Type)PIN_FP_BUTTON_BACK_ID);
+	pio_handler_set_priority(PIN_FP_BUTTON_BACK_PIO, (IRQn_Type)PIN_FP_BUTTON_BACK_ID, IRQ_PRIOR_PIO);
+	pio_enable_interrupt(PIN_FP_BUTTON_BACK_PIO, PIN_FP_BUTTON_BACK_MASK);
+	/*
 	pmc_enable_periph_clk(PIN_FP_ENCODER_Q1_ID);
 	pio_handler_set(PIN_FP_ENCODER_Q1_PIO, PIN_FP_ENCODER_Q1_ID, PIN_FP_ENCODER_Q1_MASK, PIN_FP_ENCODER_Q1_ATTR, FP_ENCODER_Handler);
 	NVIC_EnableIRQ((IRQn_Type)PIN_FP_ENCODER_Q1_ID);
@@ -368,7 +341,8 @@ int main (void) {
 	NVIC_EnableIRQ((IRQn_Type)PIN_FP_ENCODER_Q2_ID);
 	pio_handler_set_priority(PIN_FP_ENCODER_Q2_PIO, (IRQn_Type)PIN_FP_ENCODER_Q2_ID, IRQ_PRIOR_PIO);
 	pio_enable_interrupt(PIN_FP_ENCODER_Q2_PIO, PIN_FP_ENCODER_Q2_MASK);
-		*/
+	*/	
+	
 	ioport_set_pin_level(LED1_GPIO, false);
 	ioport_set_pin_level(LED2_GPIO, false);
 	ioport_set_pin_level(LED3_GPIO, false);
@@ -382,136 +356,82 @@ int main (void) {
 	/* Initialize the console uart */
 	configure_console();
 
-	spi_master_initialize();	
-	
-	ioport_set_pin_level(VFD_NRST, false);
-	delay_ms(1);
-	ioport_set_pin_level(VFD_NRST, true);
-	
-	delay_ms(500);
-	
-	vfd_write(0x1B);
-	vfd_write('@');
-	delay_ms(100);
-	
-	char stringdata[] = "Hello JTL!\0";
-	
-	vfd_write_string(stringdata);
-	
-	for(;;) {}
-	/*
+	spi_master_initialize();
+			
 	// We need to configure the ade7753...
 	// ...to have a current gain of 2...
 	uint8_t  gain		 = ADE7753_GAIN_PGA1_2;
 	ade7753_write(ADE7753_REGISTER_GAIN, &gain, ADE7753_REGISTER_GAIN_BYTES);
-uint32_t linecyc_int = 2000;
-ade7753_write(ADE7753_REGISTER_LINECYC, &linecyc_int, ADE7753_REGISTER_LINECYC_BYTES);
+	
+	// and a measurment of 2000 half line cycles
+	uint32_t linecyc_int = 200;
+	ade7753_write(ADE7753_REGISTER_LINECYC, &linecyc_int, ADE7753_REGISTER_LINECYC_BYTES);
 
-uint32_t mode_register = 0x0080;
-ade7753_write(ADE7753_REGISTER_MODE, &mode_register, ADE7753_REGISTER_MODE_BYTES);
+	uint32_t mode_register = 0x0080;
+	ade7753_write(ADE7753_REGISTER_MODE, &mode_register, ADE7753_REGISTER_MODE_BYTES);
 
-uint32_t irqen_register = 0x04;
-ade7753_write(ADE7753_REGISTER_IRQEN, &irqen_register, ADE7753_REGISTER_IRQEN_BYTES);
+	uint32_t irqen_register = 0x04;
+	ade7753_write(ADE7753_REGISTER_IRQEN, &irqen_register, ADE7753_REGISTER_IRQEN_BYTES);
 
-
-	// Magic fucking numbers brah.	
 	uint8_t phase_offset = 14;
 	ade7753_write(ADE7753_REGISTER_PHCAL, &phase_offset, ADE7753_REGISTER_PHCAL_BYTES);
 	
-	puts(STRING_HEADER);
-		
 	char input;
-	uint32_t cmd = 0x00;
-	uint8_t checksum = 0x00;
 	
-	uint32_t samples[10] = {0,0,0,0,0,0,0,0,0,0};
-	uint8_t sample_checksum[10] = {0,0,0,0,0,0,0,0,0,0};
-		
-		int i = 0;
-		int j = 0;
+	vfd_init();
+	
+	//vfd_cursor_on();
 
+	vfd_gui_splash(__DATE__, __TIME__);
+	
+	delay_s(5);
+	
+	vfd_clear();
+	
+	menu_state = MENU_STATE_VAFAAR;
 
-	sd_mmc_init();
-	for (;;) {
-		usart_serial_getchar(UART0, &input);
-		usart_serial_putchar(UART0, input);
-		usart_serial_putchar(UART0, '\r');
-		usart_serial_putchar(UART0, '\n');
-
-		switch (input) {
-			case '1':
-				printf("Switching LED1\r\n");
-				ioport_toggle_pin_level(LED1_GPIO);
-				break;
-			case '2':
-				printf("Switching LED2\r\n");
-				ioport_toggle_pin_level(LED2_GPIO);
-				break;
-			case '3':
-				printf("Switching LED3\r\n");
-				ioport_toggle_pin_level(LED3_GPIO);
-				break;
-			case '4':
-				printf("Switching RELAY 1\r\n");
-				ioport_toggle_pin_level(RELAY_1_GPIO);
-				break;
-			case '5':
-				printf("Switching RELAY 2\r\n");
-				ioport_toggle_pin_level(RELAY_2_GPIO);
-				break;
-			case 'd':
-			 	printf("Reading the DIEREV Register\r\n");
-				ade7753_read(0x3F, &cmd, 1, &checksum);
-				printf("Response 0x%x with a checksum of 0x%x %s \n\r", cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
-				break;
-			case 'i':
-				printf("Reading the IRMS Register\r\n");
-				ade7753_read(0x16, &cmd, 3, &checksum);
-				printf("Response 0x%x (%d) with a checksum of 0x%x %s \n\r", cmd, (signed)cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
-				break;
-			case 'v':
-				printf("Reading the VRMS Register\r\n");
-				ade7753_read(0x17, &cmd, 3, &checksum);
-				printf("Response 0x%x (%d) with a checksum of 0x%x %s \n\r", cmd, cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
-				break;
-			case 'a':
-				printf("Reading the IRQEN Register\r\n");
-				ade7753_read(0x0A, &cmd, 2, &checksum);
-				printf("Response 0x%x (%b) with a checksum of 0x%x %s \n\r", cmd, cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
-				break;
-			case 'p':
-				printf("Reading the PERIOD Register\r\n");
-				ade7753_read(0x27, &cmd, 2, &checksum);
-				printf("Response 0x%x (%b) with a checksum of 0x%x %s \n\r", cmd, cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
-				break;
-			case 's':
-				printf("Reading the RSTSTATUS Register\r\n");
-				for (;;) {
-					ade7753_read(0x0C, &cmd, 2, &checksum);
-					printf("Response 0x%x (%b) with a checksum of 0x%x %s \n\r", cmd, cmd, checksum, verify_result(&cmd, &checksum) ? "checksum passed" : "checksum failed");
-				}
-				break;
-			case 'b':
-				count = 10;
-				break;
-			case 'n':
-				count = 50;
-				break;
-			case 'm':
-				count = 100;
-				break;
-			case ',':
-				count = -2;
-				break;
-			case '[':
-				ade7753_calibrate_watt();
-				break;
-			case ']':
-				ade7753_calibrate_watt_offset();
-				break;
-			case '\\':
-				ade7753_calibrate_phase();
-				break;
+	for(;;) {
+		if (menu_state == MENU_STATE_SPLASH) {
+			if (changed == true) {
+				vfd_clear();
+				vfd_home();
+				vfd_gui_splash(__DATE__, __TIME__);
+				//vfd_gui_splash();
+				changed = false;
+			}
+		} else if (menu_state == MENU_STATE_VAFAAR) {
+			if (changed == true) {
+				vfd_clear();
+				changed = false;
+			}
+			vfd_home();
+			vfd_gui_vaf_aar();
+		}  else if (menu_state == MENU_STATE_TRIG) {
+			if (changed == true) {
+				vfd_clear();
+				changed = false;
+			}
+			vfd_home();
+			vfd_gui_trig();
+		}  else if (menu_state == MENU_STATE_COST) {
+			if (changed == true) {
+				vfd_clear();
+				changed = false;
+			}
+			
+			vfd_home();
+			
+			vfd_gui_cost();
+		} else if (menu_state == MENU_STATE_CONFIG) {
+			if (changed == true) {
+				vfd_clear();
+				changed = false;
+			}
+			
+			vfd_home();
+			vfd_gui_config();
+		} else {
+			vfd_clear();
 		}
-	}*/
+	}
 }

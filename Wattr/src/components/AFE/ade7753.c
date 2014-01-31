@@ -121,17 +121,17 @@ uint8_t verify_result(uint32_t *result, uint8_t *checksum) {
 
 
 void ade7753_calibrate_watt(void) {
-	printf("ADE7753 Watt Calibration.\r\n");
+	//printf("ADE7753 Watt Calibration.\r\n");
 	
 	char input; 
 	
 	uint32_t cfdn_int = 336;
 	ade7753_write(ADE7753_REGISTER_CFDEN, &cfdn_int, ADE7753_REGISTER_CFDEN_BYTES);
 	
-	printf("Apply %dV to the input and %dA to the output. PF:1 Press any key to continue.\r\n", 120, 7);
-	usart_serial_getchar(UART0, &input);
+//	printf("Apply %dV to the input and %dA to the output. PF:1 Press any key to continue.\r\n", 120, 7);
+	//usart_serial_getchar(UART0, &input);
 	
-	uint32_t linecyc_int = 2000;
+	uint32_t linecyc_int = 200;
 	ade7753_write(ADE7753_REGISTER_LINECYC, &linecyc_int, ADE7753_REGISTER_LINECYC_BYTES);
 	
 	uint32_t mode_register = 0x0080;
@@ -147,7 +147,7 @@ void ade7753_calibrate_watt(void) {
 	int count = 0;
 	
 	for (;;) {
-		printf("%d\r\n", count++);
+		//printf("%d\r\n", count++);
 		if (!ioport_get_pin_level(ADE7753_IRQ_GPIO)) {
 			break;
 		}
@@ -160,12 +160,14 @@ void ade7753_calibrate_watt(void) {
 	count = 0;
 	
 	for (;;) {
-		printf("%d\r\n", count++);
+	//	printf("%d\r\n", count++);
 		if (!ioport_get_pin_level(ADE7753_IRQ_GPIO)) {
 			break;
 		}
 	}
 	
+	uint32_t voltage = 0;
+	uint32_t current = 0;
 	uint32_t active_energy = 0;
 	uint32_t apparant_energy = 0;
 	uint32_t reactive_energy = 0;
@@ -176,12 +178,13 @@ void ade7753_calibrate_watt(void) {
 	uint8_t period_checksum = 0;
 	uint8_t reactive_energy_checksum = 0;
 	
+	ade7753_read(ADE7753_REGISTER_VRMS, &voltage, ADE7753_REGISTER_VRMS_BYTES, &active_energy_checksum);
+	ade7753_read(ADE7753_REGISTER_IRMS, &current, ADE7753_REGISTER_IRMS_BYTES, &active_energy_checksum);
 	ade7753_read(ADE7753_REGISTER_LAENERGY,  &active_energy,   ADE7753_REGISTER_LAENERGY_BYTES,  &active_energy_checksum);
 	ade7753_read(ADE7753_REGISTER_LVAENERGY, &apparant_energy, ADE7753_REGISTER_LVAENERGY_BYTES, &apparant_energy_checksum);
-	ade7753_read(ADE7753_REGISTER_LVARENERGY, &reactive_energy, ADE7753_REGISTER_LVARENERGY_BYTES, &reactive_energy_checksum);
 	ade7753_read(ADE7753_REGISTER_PERIOD,    &period,          ADE7753_REGISTER_PERIOD_BYTES,    &period_checksum);
 	
-	printf("Active Energy: %d (%d); Apparant Energy: %d (%d); Reactive Energy: %d (%d); Period: %d (%d)\r\n", active_energy, active_energy_checksum, apparant_energy, apparant_energy_checksum, reactive_energy, reactive_energy_checksum, period, period_checksum);
+	printf("%d,%d,%d,%d,%d\r\n", voltage, current, period, active_energy, apparant_energy);
 	
 }
 
