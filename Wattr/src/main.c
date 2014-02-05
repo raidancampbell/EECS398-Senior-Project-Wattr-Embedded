@@ -116,9 +116,7 @@ char* create_measurement_string() {
 	uint32_t unsigned_active_power = (uint32_t)global_active_power;
 	float32_t line_active_power = (float32_t)(unsigned_active_power);
 	line_active_power *= 0.016121f;
-	line_active_power -= 7.0595f;
-	line_active_power += 6.8f;
-	line_active_power += 0.24f;
+	line_active_power -= 0.0195f;
 	global_active_power_string = gcvtf(line_active_power, 3, global_active_power_string);
 	
 	float32_t line_active_power_watt_hour = (float32_t)(unsigned_active_power);
@@ -130,9 +128,7 @@ char* create_measurement_string() {
 	// Line Apparent Power y=mx+b
 	float32_t line_apparent_power = (float32_t)(global_apparent_power);
 	line_apparent_power *= 0.019658f;
-	line_apparent_power -= 11.7168f;
-	line_apparent_power += 9.8f;
-	line_apparent_power += 0.52f;
+	line_apparent_power -= 1.3968f;
 	global_apparent_power_string = gcvtf(line_apparent_power, 3, global_apparent_power_string);
 
 	// Power Factor Calculation
@@ -147,7 +143,8 @@ char* create_measurement_string() {
 	global_phase_angle_string = gcvtf(line_phase_angle_radian, 3, global_phase_angle_string);
 	
 	// Reactive Power Calculation
-	float32_t line_reactive_power = tanf(line_phase_angle) * line_active_power;
+	float32_t line_reactive_power = sqrt
+		((line_apparent_power * line_apparent_power) - (line_active_power * line_active_power));
 	global_reactive_power_string = gcvtf(line_reactive_power, 2, global_reactive_power_string);
 	
 	// Line Frequency Calculation
@@ -203,7 +200,6 @@ inline void read_apparent_power() {
 void ZX_Handler(uint32_t id, uint32_t mask) {	
 	ioport_toggle_pin_level(LED1_GPIO);
 	ioport_toggle_pin_level(FP_LED2_GPIO);
-
 	if (zx_count == 60) {
 		zx_count = 0;
 		epoch++;
@@ -230,8 +226,7 @@ void IRQ_Handler(uint32_t id, uint32_t mask) {
 	read_active_power();
 	read_apparent_power();
 	
-	uint32_t global_active_power_test = (uint32_t)global_active_power;
-	uint32_t unsigned_active_power = (uint32_t)global_active_power_test;
+	uint32_t unsigned_active_power = (uint32_t)global_active_power; 
 	float32_t line_active_power_watt_hour = (float32_t)(unsigned_active_power);
 	line_active_power_watt_hour *= .000075018f;
 	line_active_power_watt_hour -= .03266f;
