@@ -163,6 +163,9 @@ char* create_measurement_string() {
 	return measurement;
 }
 
+/* takes a signed 24-bit integer, and converts it into a signed 32-bit integer
+ * shift left by eight bits, to get the signed bit into the MSB
+ * divide by 256, to pull it back down, repeating across the excess eight bits. */
 int32_t fix_signed_24(int32_t number) {
 	int32_t fixed = (int32_t)number;
 	number = number << 8;
